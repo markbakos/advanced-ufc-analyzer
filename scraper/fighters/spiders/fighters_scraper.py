@@ -1,6 +1,4 @@
 import csv
-import datetime
-import re
 import string
 import logging
 import requests
@@ -28,7 +26,7 @@ class UFCStatsSpider:
         with open(self.output_file, 'w', newline='', encoding='utf-8') as csvfile:
             writer = csv.writer(csvfile)
             writer.writerow([
-                'fighter_id', 'fighter_name', 'birth_year', 'height_cm', 'weight_kg', 'reach_cm',
+                'fighter_id', 'fighter_name', 'nickname', 'birth_year', 'height_cm', 'weight_kg', 'reach_cm',
                 'stance', 'fighter_style', 'wins', 'losses', 'draws', 'win_percentage', 'momentum',
                 'SLpM', 'str_acc', 'SApM', 'str_def', 'td_avg', 'td_acc', 'td_def', 'sub_avg',
                 'total_dec_wins', 'total_sub_wins', 'total_ko_wins', 'total_knockdowns',
@@ -62,7 +60,7 @@ class UFCStatsSpider:
         
         for letter in self.letters:
             LOGGER.info(f"Collecting fighters for letter: {letter}")
-            url = f"{self.base_url}?char={letter}{"&page=all" if not TEST_RUN else ""}"
+            url = f"{self.base_url}?char={letter}{'&page=all' if not TEST_RUN else ''}"
             
             html = self.fetch_page(url)
             if not html:
@@ -104,18 +102,35 @@ class UFCStatsSpider:
 
         fighter_id = url.split('/')[-1]
         
-        fighter_name_elem = soup.select_one('span.b-content__title-highlight')
-        if fighter_name_elem:
-            fighter_name = fighter_name_elem.text.strip()
-            LOGGER.info(f"Processing fighter: {fighter_name} (ID: {fighter_id})")
+        try:
+            fighter_name = soup.select_one('span.b-content__title-highlight').get_text(strip=True)
+            LOGGER.info(f"Collecting fighter: {fighter_name} (ID:{fighter_id})")
+        except AttributeError:
+            fighter_name = None
+        
+        try:
+            record_text = soup.select_one('span.b-content__title-record').get_text(strip=True)
+            record_numbers = record_text.split(' ', maxsplit=1)[-1].strip().split(' ')[0].strip().split('-')
+            win = int(record_numbers[0])
+            loss = int(record_numbers[1])
+            draw = int(record_numbers[2])
+        
+        except (AttributeError, ValueError, IndexError):
+            win, loss, draw = None, None, None
 
+        try:
+            nickname = soup.select_one('.b-content__Nickname').get_text(strip=True)
+            if "" == nickname:
+                nickname = None
+        except AttributeError:
+            nickname = None
 
-        fighter_record = soup.select_one('span.b-content__title-record').text.strip()
-        LOGGER.info(f"Fighter Record: {fighter_record}")
-            
+        LOGGER.info(f"Fighter Record: {win}-{loss}-{draw}")
+        LOGGER.info(f"Nickname: {nickname}")
+
         with open(self.output_file, 'a', newline='', encoding='utf-8') as csvfile:
             writer = csv.writer(csvfile)
-            writer.writerow([fighter_id, fighter_name] + [''] * 38)
+            writer.writerow([fighter_id, fighter_name, nickname, '', '', '', '', '', '', win, loss, draw] + [''] * 28)
 
 
 if __name__ == "__main__":
