@@ -124,4 +124,89 @@ def extract_fighter_record(soup: BeautifulSoup) -> Tuple[Optional[int], Optional
     except Exception as e:
         logger.warning(f"Exception extracting fighter record: {e}")
     
-    return wins, losses, draws 
+    return wins, losses, draws
+
+def extract_career_statistics(soup: BeautifulSoup) -> Dict[str, float]:
+    """
+    Extracts the career statistics table from fighter's page
+
+    Args:
+        soup: Fighter's page
+
+    Returns:
+        Dictionary that returns fighter's career statistics
+    """
+
+    result = {
+        "SLpM": None,
+        "str_acc": None,
+        "SApM": None,
+        "str_def": None,
+        "td_avg": None,
+        "td_acc": None,
+        "td_def": None,
+        "sub_avg": None,
+    }
+
+    try:
+        # get career box element
+        career_box_left = soup.select_one('.b-list__info-box.b-list__info-box_style_middle-width')
+        if not career_box_left:
+            return result
+
+        career_box_right = career_box_left.select_one('.b-list__info-box-right')
+        if not career_box_right:
+            return result
+
+        #get list items for left section
+        career_items_left = career_box_left.select('li')
+
+        #extract data from left
+        for item in career_items_left:
+            item_text = item.get_text(strip=True)
+
+            if "SLpM:" in item_text:
+                slpm_value = item_text.replace("SLpM:", "").strip()
+                result["SLpM"] = float(slpm_value) if slpm_value else None
+
+            elif "Str. Acc.:" in item_text:
+                str_acc_value = item_text.replace("Str. Acc.:", "").strip()
+                result["str_acc"] = float(str_acc_value.replace("%", "")) if str_acc_value else None
+
+            elif "SApM:" in item_text:
+                sapm_value = item_text.replace("SApM:", "").strip()
+                result["SApM"] = float(sapm_value) if sapm_value else None
+
+            elif "Str. Def:" in item_text:
+                str_def_value = item_text.replace("Str. Def:", "").strip()
+                result["str_def"] = float(str_def_value.replace("%", "")) if str_def_value else None
+
+        # get list items for right section
+        if career_box_right:
+            right_items = career_box_right.select('li.b-list__box-list-item')
+
+            for item in right_items:
+                item_text = item.get_text(strip=True)
+
+                if "TD Avg.:" in item_text:
+                    td_avg_value = item_text.replace("TD Avg.:", "").strip()
+                    result["td_avg"] = float(td_avg_value) if td_avg_value and td_avg_value != '' else None
+
+                elif "TD Acc.:" in item_text:
+                    td_acc_value = item_text.replace("TD Acc.:", "").strip()
+                    result["td_acc"] = float(
+                        td_acc_value.replace("%", "")) if td_acc_value and td_acc_value != '' else None
+
+                elif "TD Def.:" in item_text:
+                    td_def_value = item_text.replace("TD Def.:", "").strip()
+                    result["td_def"] = float(
+                        td_def_value.replace("%", "")) if td_def_value and td_def_value != '' else None
+
+                elif "Sub. Avg.:" in item_text:
+                    sub_avg_value = item_text.replace("Sub. Avg.:", "").strip()
+                    result["sub_avg"] = float(sub_avg_value) if sub_avg_value and sub_avg_value != '' else None
+
+    except Exception as e:
+        logger.warning(f"Exception extracting career statistics for fighter, {e}")
+
+    return result
