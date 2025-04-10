@@ -10,7 +10,8 @@ from typing import Set, Dict, Any, Optional
 from scraper.fighters.extractors import (
     extract_physical_data,
     extract_fighter_name_and_nickname,
-    extract_fighter_record
+    extract_fighter_record,
+    extract_career_statistics
 )
 
 LOGGER = logging.getLogger(__name__)
@@ -157,18 +158,17 @@ class UFCStatsSpider:
         fighter_name, nickname = extract_fighter_name_and_nickname(soup)
         wins, losses, draws = extract_fighter_record(soup)
         physical_data = extract_physical_data(soup)
+        career_data = extract_career_statistics(soup)
         
         if fighter_name:
             LOGGER.info(f"Processing fighter: {fighter_name} (ID: {fighter_id})")
-            if physical_data.get('height_cm'):
-                LOGGER.info(f"Height in CM: {physical_data['height_cm']}")
-        
+
         # saves data to CSV
-        self._save_fighter_data(fighter_id, fighter_name, nickname, physical_data, wins, losses, draws)
+        self._save_fighter_data(fighter_id, fighter_name, nickname, physical_data, wins, losses, draws, career_data)
     
     def _save_fighter_data(self, fighter_id: str, fighter_name: Optional[str], 
                           nickname: Optional[str], physical_data: Dict[str, Any],
-                          wins: Optional[int], losses: Optional[int], draws: Optional[int]) -> None:
+                          wins: Optional[int], losses: Optional[int], draws: Optional[int], career_data: Dict[str, float]) -> None:
         """
         Saves fighter data to the CSV file
         
@@ -183,6 +183,8 @@ class UFCStatsSpider:
         """
         with open(self.output_file, 'a', newline='', encoding='utf-8') as csvfile:
             writer = csv.writer(csvfile)
+
+            win_percentage = round((wins/(wins+losses+draws)), 2) if (wins+losses+draws) > 0 else 0
             
             # prepare data
             row = [
@@ -197,11 +199,21 @@ class UFCStatsSpider:
                 '',  # fighter_style
                 wins,
                 losses,
-                draws
+                draws,
+                win_percentage,
+                '', # momentum
+                career_data.get('SLpM'),
+                career_data.get('str_acc'),
+                career_data.get('SApM'),
+                career_data.get('str_def'),
+                career_data.get('td_avg'),
+                career_data.get('td_acc'),
+                career_data.get('td_def'),
+                career_data.get('sub_avg'),
             ]
             
             # add placeholders
-            row.extend([''] * 28)
+            row.extend([''] * 20)
             
             # add timestamp
             row[-1] = datetime.datetime.now().isoformat()
