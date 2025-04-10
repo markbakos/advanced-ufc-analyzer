@@ -1,5 +1,8 @@
+import datetime
 import logging
 from typing import Dict, Any, Optional, Tuple
+
+import requests
 from bs4 import BeautifulSoup
 from .utils import (
     convert_height_to_cm, 
@@ -210,3 +213,135 @@ def extract_career_statistics(soup: BeautifulSoup) -> Dict[str, float]:
         logger.warning(f"Exception extracting career statistics for fighter, {e}")
 
     return result
+
+def extract_fights(soup: BeautifulSoup) -> Dict[str, Any]:
+
+    fighter_stats = {
+        'total_ufc_fights': 0,
+        'wins_in_ufc': 0,
+        'losses_in_ufc': 0,
+        'wins_by_dec': 0,
+        'losses_by_dec': 0,
+        'wins_by_sub': 0,
+        'losses_by_sub': 0,
+        'wins_by_ko': 0,
+        'losses_by_ko': 0,
+        'knockdowns_landed': 0,
+        'knockdowns_absorbed': 0,
+        'strikes_landed': 0,
+        'strikes_absorbed': 0,
+        'takedowns_landed': 0,
+        'takedowns_absorbed': 0,
+        'sub_attempts_landed': 0,
+        'sub_attempts_absorbed': 0,
+        'total_rounds': 0,
+        'total_time_minutes': 0,
+        'last_fight_date': None,
+        'last_win_date': None
+    }
+
+    fight_table = soup.select_one('.b-fight-details__table_type_event-details')
+    if not fight_table:
+        return fighter_stats
+
+    fight_rows = fight_table.select('tbody.b-fight-details__table-body tr:not(.b-fight-details__table-row__head)')
+    fighter_name = soup.select_one('span.b-content__title-highlight').text.strip()
+
+    for row in fight_rows:
+        if not row.select('td'):
+            continue
+
+        # check if valid fight row
+        cells = row.select('td')
+        if len(cells) < 7:
+            continue
+
+        #check if this was a UFC event
+        fighter_stats['total_ufc_fights'] += 1
+
+        # win or loss
+        result = row.select('td')[0].get_text(strip=True)
+
+        date_text = row.select('td')[6].select('p')[1].get_text(strip=True)
+
+        # get last fight date and last win date
+        try:
+            fight_date = datetime.datetime.strptime(date_text, "%b. %d, %Y")
+
+            if fighter_stats['last_fight_date'] is None:
+                fighter_stats['last_fight_date'] = fight_date
+
+            if result.lower() == 'win' and fighter_stats['last_win_date'] is None:
+                fighter_stats['last_win_date'] = fight_date
+        except:
+            pass # if error we continue
+
+        # method of victory/defeat
+        method = row.select('td')[7].select('p')[0].get_text(strip=True)
+
+        if result.lower() == "win":
+            fighter_stats['wins_in_ufc'] += 1
+            if "dec" in method.lower():
+                fighter_stats['wins_by_dec'] += 1
+            elif "sub" in method.lower():
+                fighter_stats['wins_by_sub'] += 1
+            elif "ko/tko" in method.lower():
+                fighter_stats['wins_by_ko'] += 1
+        if result.lower() == "loss":
+            fighter_stats['losses_in_ufc'] += 1
+            if "dec" in method.lower():
+                fighter_stats['losses_by_dec'] += 1
+            elif "sub" in method.lower():
+                fighter_stats['losses_by_sub'] += 1
+            elif "ko/tko" in method.lower():
+                fighter_stats['losses_by_ko'] += 1
+
+        cols = row.select('td')
+
+        # knockdowns
+        kd_data = cols[2].select('p')
+        if len(kd_data) >= 2:
+            fighter_stats['knockdowns_landed'] += int(kd_data[0].get_text(strip=True) or 0)
+            fighter_stats['knockdowns_absorbed'] += int(kd_data[1].get_text(strip=True) or 0)
+
+        #strikes
+        strike_data = cols[3].select('p')
+        if len(strike_data) >= 2:
+            fighter_stats['strikes_landed'] += int(strike_data[0].get_text(strip=True) or 0)
+            fighter_stats['strikes_absorbed'] += int(strike_data[1].get_text(strip=True) or 0)
+
+        # takedowns
+        td_data = cols[3].select('p')
+        if len(td_data) >= 2:
+            fighter_stats['takedowns_landed'] += int(td_data[0].get_text(strip=True) or 0)
+            fighter_stats['takedowns_absorbed'] += int(td_data[1].get_text(strip=True) or 0)
+
+        # sub attempts
+        sub_data = cols[3].select('p')
+        if len(sub_data) >= 2:
+            fighter_stats['sub_attempts_landed'] += int(sub_data[0].get_text(strip=True) or 0)
+            fighter_stats['sub_attempts_absorbed'] += int(sub_data[1].get_text(strip=True) or 0)
+
+        # get round and time info
+        round_num = int(row.select('td')[8].get_text(strip=True))
+        time_str = row.select('td')[9].get_text(strip=True)
+
+        # full rounds completed
+        fighter_stats['total_rounds'] += round_num if time_str == "5:00" else round_num - 1
+
+        # calculate total fight time in minutes
+        minutes, seconds = map(int, time_str.split(':'))
+        total_minutes = round_num * 5 + minutes + seconds//60
+        fighter_stats['total_time_minutes'] += total_minutes
+
+    return fighter_stats
+
+
+if __name__ == '__main__':
+    # test scraping with Israel Adesanya
+    fighter_url = "http://ufcstats.com/fighter-details/1338e2c7480bdf9e"
+    response = requests.get(fighter_url)
+    soup = BeautifulSoup(response.content, 'html.parser')
+
+    stats = extract_fights(soup)
+    print(stats)
