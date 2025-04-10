@@ -11,7 +11,8 @@ from scraper.fighters.extractors import (
     extract_physical_data,
     extract_fighter_name_and_nickname,
     extract_fighter_record,
-    extract_career_statistics
+    extract_career_statistics,
+    extract_fights,
 )
 
 LOGGER = logging.getLogger(__name__)
@@ -47,10 +48,11 @@ class UFCStatsSpider:
                 'fighter_id', 'fighter_name', 'nickname', 'date_of_birth', 'height_cm', 'weight_kg', 'reach_cm',
                 'stance', 'fighter_style', 'wins', 'losses', 'draws', 'win_percentage', 'momentum',
                 'SLpM', 'str_acc', 'SApM', 'str_def', 'td_avg', 'td_acc', 'td_def', 'sub_avg',
-                'total_dec_wins', 'total_sub_wins', 'total_ko_wins', 'total_knockdowns',
-                'total_strikes_landed', 'total_strikes_absorbed', 'total_takedowns_landed',
-                'total_takedowns_absorbed', 'total_sub_attempts_landed', 'total_sub_attempts_absorbed',
-                'total_fight_time_min', 'avg_knockdowns', 'avg_strikes_landed', 'avg_strikes_absorbed',
+                'total_ufc_fights', 'wins_in_ufc', 'losses_in_ufc', 'draws_in_ufc',
+                'wins_by_dec','losses_by_dec','wins_by_sub','losses_by_sub','wins_by_ko','losses_by_ko',
+                'knockdowns_landed', 'knockdowns_absorbed', 'strikes_landed', 'strikes_absorbed',
+                'takedowns_landed', 'takedowns_absorbed', 'sub_attempts_landed', 'sub_attempts_absorbed',
+                'total_rounds', 'total_time_minutes', 'avg_knockdowns', 'avg_strikes_landed', 'avg_strikes_absorbed',
                 'avg_takedowns_landed', 'avg_takedowns_absorbed', 'avg_submission_attempts_landed',
                 'avg_submission_attempts_absorbed', 'avg_fight_time_min', 'updated_timestamp'
             ])
@@ -159,16 +161,18 @@ class UFCStatsSpider:
         wins, losses, draws = extract_fighter_record(soup)
         physical_data = extract_physical_data(soup)
         career_data = extract_career_statistics(soup)
+        fight_data = extract_fights(soup)
         
         if fighter_name:
             LOGGER.info(f"Processing fighter: {fighter_name} (ID: {fighter_id})")
 
         # saves data to CSV
-        self._save_fighter_data(fighter_id, fighter_name, nickname, physical_data, wins, losses, draws, career_data)
+        self._save_fighter_data(fighter_id, fighter_name, nickname, physical_data, wins, losses, draws, career_data, fight_data)
     
     def _save_fighter_data(self, fighter_id: str, fighter_name: Optional[str], 
                           nickname: Optional[str], physical_data: Dict[str, Any],
-                          wins: Optional[int], losses: Optional[int], draws: Optional[int], career_data: Dict[str, float]) -> None:
+                          wins: Optional[int], losses: Optional[int], draws: Optional[int],
+                           career_data: Dict[str, float], fight_data: Dict[str, Any]) -> None:
         """
         Saves fighter data to the CSV file
         
@@ -210,10 +214,32 @@ class UFCStatsSpider:
                 career_data.get('td_acc'),
                 career_data.get('td_def'),
                 career_data.get('sub_avg'),
+                fight_data.get('total_ufc_fights'),
+                fight_data.get('wins_in_ufc'),
+                fight_data.get('losses_in_ufc'),
+                fight_data.get('draws_in_ufc'),
+                fight_data.get('wins_by_dec'),
+                fight_data.get('losses_by_dec'),
+                fight_data.get('wins_by_sub'),
+                fight_data.get('losses_by_sub'),
+                fight_data.get('wins_by_ko'),
+                fight_data.get('losses_by_ko'),
+                fight_data.get('knockdowns_landed'),
+                fight_data.get('knockdowns_absorbed'),
+                fight_data.get('strikes_landed'),
+                fight_data.get('strikes_absorbed'),
+                fight_data.get('takedowns_landed'),
+                fight_data.get('takedowns_absorbed'),
+                fight_data.get('sub_attempts_landed'),
+                fight_data.get('sub_attempts_absorbed'),
+                fight_data.get('total_rounds'),
+                fight_data.get('total_time_minutes'),
+                fight_data.get('last_fight_date'),
+                fight_data.get('last_win_date'),
             ]
             
             # add placeholders
-            row.extend([''] * 20)
+            row.extend([''] * 7)
             
             # add timestamp
             row[-1] = datetime.datetime.now().isoformat()
