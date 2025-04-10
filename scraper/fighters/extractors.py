@@ -215,7 +215,15 @@ def extract_career_statistics(soup: BeautifulSoup) -> Dict[str, float]:
     return result
 
 def extract_fights(soup: BeautifulSoup) -> Dict[str, Any]:
+    """
+    Extracts the fight data from the fighter's previous matches
 
+    Args:
+        soup: Fighter's page
+
+    Returns:
+        Dictionary that returns fighter's fight data statistics
+    """
     fighter_stats = {
         'total_ufc_fights': 0,
         'wins_in_ufc': 0,
