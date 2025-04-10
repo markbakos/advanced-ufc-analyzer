@@ -34,24 +34,34 @@ def extract_physical_data(soup: BeautifulSoup) -> Dict[str, Any]:
         info_box = soup.select_one('.b-list__info-box.b-list__info-box_style_small-width')
         if not info_box:
             return result
+        
+        # extract the data using li identifier
+        info_items = info_box.select('li')
+        
+        for item in info_items:
+            item_text = item.get_text(strip=True)
             
-        data_text = info_box.get_text(strip=True, separator='_').split('_')
-        
-        # extract values using index positions
-        extract_value = lambda idx: data_text[idx] if idx < len(data_text) else None
-        
-        height = extract_value(1)
-        weight = extract_value(3)
-        reach = extract_value(5)
-        stance = extract_value(7)
-        dob = extract_value(9)
-        
-        # convert and clean values
-        result["height_cm"] = convert_height_to_cm(height)
-        result["weight_kg"] = convert_weight_to_kg(weight)
-        result["reach_cm"] = convert_reach_to_cm(reach)
-        result["stance"] = clean_string(stance)
-        result["date_of_birth"] = parse_date_of_birth(dob)
+            if "Height:" in item_text:
+                height_value = item_text.replace("Height:", "").strip()
+                result["height_cm"] = convert_height_to_cm(height_value)
+                
+            elif "Weight:" in item_text:
+                weight_value = item_text.replace("Weight:", "").strip()
+                result["weight_kg"] = convert_weight_to_kg(weight_value)
+                
+            elif "Reach:" in item_text:
+                reach_value = item_text.replace("Reach:", "").strip()
+                result["reach_cm"] = convert_reach_to_cm(reach_value)
+                
+            elif "STANCE:" in item_text:
+                stance_value = item_text.replace("STANCE:", "").strip()
+                result["stance"] = clean_string(stance_value)
+                
+            elif "DOB:" in item_text:
+                dob_value = item_text.replace("DOB:", "").strip()
+                result["date_of_birth"] = parse_date_of_birth(dob_value)
+                
+        logger.debug(f"Extracted physical data: {result}")
         
     except Exception as e:
         logger.warning(f"Exception in extract_physical_data: {e}")
