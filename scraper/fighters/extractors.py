@@ -228,6 +228,7 @@ def extract_fights(soup: BeautifulSoup) -> Dict[str, Any]:
         'total_ufc_fights': 0,
         'wins_in_ufc': 0,
         'losses_in_ufc': 0,
+        'draws_in_ufc': 0,
         'wins_by_dec': 0,
         'losses_by_dec': 0,
         'wins_by_sub': 0,
@@ -295,7 +296,7 @@ def extract_fights(soup: BeautifulSoup) -> Dict[str, Any]:
                 fighter_stats['wins_by_sub'] += 1
             elif "ko/tko" in method.lower():
                 fighter_stats['wins_by_ko'] += 1
-        if result.lower() == "loss":
+        elif result.lower() == "loss":
             fighter_stats['losses_in_ufc'] += 1
             if "dec" in method.lower():
                 fighter_stats['losses_by_dec'] += 1
@@ -303,6 +304,8 @@ def extract_fights(soup: BeautifulSoup) -> Dict[str, Any]:
                 fighter_stats['losses_by_sub'] += 1
             elif "ko/tko" in method.lower():
                 fighter_stats['losses_by_ko'] += 1
+        elif result.lower() == "draw":
+            fighter_stats['draws_in_ufc'] += 1
 
         cols = row.select('td')
 
