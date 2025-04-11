@@ -333,13 +333,13 @@ def extract_fights(soup: BeautifulSoup) -> Dict[str, Any]:
             fighter_stats['strikes_absorbed'] += safe_int_convert(strike_data[1].get_text(strip=True) or 0)
 
         # takedowns
-        td_data = cols[3].select('p')
+        td_data = cols[4].select('p')
         if len(td_data) >= 2:
             fighter_stats['takedowns_landed'] += safe_int_convert(td_data[0].get_text(strip=True) or 0)
             fighter_stats['takedowns_absorbed'] += safe_int_convert(td_data[1].get_text(strip=True) or 0)
 
         # sub attempts
-        sub_data = cols[3].select('p')
+        sub_data = cols[5].select('p')
         if len(sub_data) >= 2:
             fighter_stats['sub_attempts_landed'] += safe_int_convert(sub_data[0].get_text(strip=True) or 0)
             fighter_stats['sub_attempts_absorbed'] += safe_int_convert(sub_data[1].get_text(strip=True) or 0)
