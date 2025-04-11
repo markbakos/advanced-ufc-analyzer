@@ -254,7 +254,6 @@ def extract_fights(soup: BeautifulSoup) -> Dict[str, Any]:
         return fighter_stats
 
     fight_rows = fight_table.select('tbody.b-fight-details__table-body tr:not(.b-fight-details__table-row__head)')
-    fighter_name = soup.select_one('span.b-content__title-highlight').text.strip()
 
     for row in fight_rows:
         if not row.select('td'):
