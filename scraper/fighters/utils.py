@@ -108,4 +108,13 @@ def clean_string(text: str) -> Optional[str]:
     """
     if not text or text.strip() == "" or text.strip() == "--":
         return None
-    return text.strip() 
+    return text.strip()
+
+def safe_int_convert(text):
+    try:
+        text = text.strip()
+        if text == '--' or not text:
+            return 0
+        return int(text)
+    except (ValueError, TypeError):
+        return 0
