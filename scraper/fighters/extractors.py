@@ -5,11 +5,12 @@ from typing import Dict, Any, Optional, Tuple
 import requests
 from bs4 import BeautifulSoup
 from .utils import (
-    convert_height_to_cm, 
-    convert_weight_to_kg, 
-    convert_reach_to_cm, 
+    convert_height_to_cm,
+    convert_weight_to_kg,
+    convert_reach_to_cm,
     parse_date_of_birth,
-    clean_string
+    clean_string,
+    safe_int_convert
 )
 
 logger = logging.getLogger(__name__)
@@ -264,25 +265,36 @@ def extract_fights(soup: BeautifulSoup) -> Dict[str, Any]:
         if len(cells) < 7:
             continue
 
-        #check if this was a UFC event
         fighter_stats['total_ufc_fights'] += 1
 
         # win or loss
-        result = row.select('td')[0].get_text(strip=True)
-
-        date_text = row.select('td')[6].select('p')[1].get_text(strip=True)
-
-        # get last fight date and last win date
         try:
-            fight_date = datetime.datetime.strptime(date_text, "%b. %d, %Y")
+            result = row.select('td')[0].get_text(strip=True).lower()
+        except IndexError:
+            result = ""
 
-            if fighter_stats['last_fight_date'] is None:
-                fighter_stats['last_fight_date'] = fight_date
+        try:
+            date_paragraphs = cells[6].select('p')
+            if len(date_paragraphs) > 1:
+                date_text = date_paragraphs[1].get_text(strip=True)
+            else:
+                date_text = ""
 
-            if result.lower() == 'win' and fighter_stats['last_win_date'] is None:
-                fighter_stats['last_win_date'] = fight_date
-        except:
-            pass # if error we continue
+            # get last fight date and last win date
+            if date_text:
+                try:
+                    fight_date = datetime.datetime.strptime(date_text, "%b. %d, %Y")
+
+                    if fighter_stats['last_fight_date'] is None:
+                        fighter_stats['last_fight_date'] = fight_date
+
+                    if result == 'win' and fighter_stats['last_win_date'] is None:
+                        fighter_stats['last_win_date'] = fight_date
+                except:
+                    pass  # if error we continue
+        except IndexError:
+            pass  # continue if date extraction fails
+
 
         # method of victory/defeat
         method = row.select('td')[7].select('p')[0].get_text(strip=True)
@@ -311,29 +323,29 @@ def extract_fights(soup: BeautifulSoup) -> Dict[str, Any]:
         # knockdowns
         kd_data = cols[2].select('p')
         if len(kd_data) >= 2:
-            fighter_stats['knockdowns_landed'] += int(kd_data[0].get_text(strip=True) or 0)
-            fighter_stats['knockdowns_absorbed'] += int(kd_data[1].get_text(strip=True) or 0)
+            fighter_stats['knockdowns_landed'] += safe_int_convert(kd_data[0].get_text(strip=True))
+            fighter_stats['knockdowns_absorbed'] += safe_int_convert(kd_data[1].get_text(strip=True))
 
         #strikes
         strike_data = cols[3].select('p')
         if len(strike_data) >= 2:
-            fighter_stats['strikes_landed'] += int(strike_data[0].get_text(strip=True) or 0)
-            fighter_stats['strikes_absorbed'] += int(strike_data[1].get_text(strip=True) or 0)
+            fighter_stats['strikes_landed'] += safe_int_convert(strike_data[0].get_text(strip=True) or 0)
+            fighter_stats['strikes_absorbed'] += safe_int_convert(strike_data[1].get_text(strip=True) or 0)
 
         # takedowns
         td_data = cols[3].select('p')
         if len(td_data) >= 2:
-            fighter_stats['takedowns_landed'] += int(td_data[0].get_text(strip=True) or 0)
-            fighter_stats['takedowns_absorbed'] += int(td_data[1].get_text(strip=True) or 0)
+            fighter_stats['takedowns_landed'] += safe_int_convert(td_data[0].get_text(strip=True) or 0)
+            fighter_stats['takedowns_absorbed'] += safe_int_convert(td_data[1].get_text(strip=True) or 0)
 
         # sub attempts
         sub_data = cols[3].select('p')
         if len(sub_data) >= 2:
-            fighter_stats['sub_attempts_landed'] += int(sub_data[0].get_text(strip=True) or 0)
-            fighter_stats['sub_attempts_absorbed'] += int(sub_data[1].get_text(strip=True) or 0)
+            fighter_stats['sub_attempts_landed'] += safe_int_convert(sub_data[0].get_text(strip=True) or 0)
+            fighter_stats['sub_attempts_absorbed'] += safe_int_convert(sub_data[1].get_text(strip=True) or 0)
 
         # get round and time info
-        round_num = int(row.select('td')[8].get_text(strip=True))
+        round_num = safe_int_convert(row.select('td')[8].get_text(strip=True))
         time_str = row.select('td')[9].get_text(strip=True)
 
         # full rounds completed
