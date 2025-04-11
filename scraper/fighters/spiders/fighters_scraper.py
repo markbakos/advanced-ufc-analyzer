@@ -53,7 +53,7 @@ class UFCStatsSpider:
                 'knockdowns_landed', 'knockdowns_absorbed', 'strikes_landed', 'strikes_absorbed',
                 'takedowns_landed', 'takedowns_absorbed', 'sub_attempts_landed', 'sub_attempts_absorbed',
                 'total_rounds', 'total_time_minutes', 'last_fight_date', 'last_win_date',
-                'avg_knockdowns', 'avg_strikes_landed', 'avg_strikes_absorbed',
+                'avg_knockdowns_landed', 'avg_knockdowns_absorbed', 'avg_strikes_landed', 'avg_strikes_absorbed',
                 'avg_takedowns_landed', 'avg_takedowns_absorbed', 'avg_submission_attempts_landed',
                 'avg_submission_attempts_absorbed', 'avg_fight_time_min', 'updated_timestamp'
             ])
@@ -190,7 +190,31 @@ class UFCStatsSpider:
             writer = csv.writer(csvfile)
 
             win_percentage = round((wins/(wins+losses+draws)), 2) if (wins+losses+draws) > 0 else 0
-            
+
+            total_fights = fight_data.get('total_ufc_fights', 0)
+
+            if total_fights > 0:
+                avg_knockdowns_landed = round(fight_data.get('knockdowns_landed', 0) / total_fights, 2)
+                avg_knockdowns_absorbed = round(fight_data.get('knockdowns_absorbed', 0) / total_fights, 2)
+                avg_strikes_landed = round(fight_data.get('strikes_landed', 0) / total_fights, 2)
+                avg_strikes_absorbed = round(fight_data.get('strikes_absorbed', 0) / total_fights, 2)
+                avg_takedowns_landed = round(fight_data.get('takedowns_landed', 0) / total_fights, 2)
+                avg_takedowns_absorbed = round(fight_data.get('takedowns_absorbed', 0) / total_fights, 2)
+                avg_submission_attempts_landed = round(fight_data.get('sub_attempts_landed', 0) / total_fights, 2)
+                avg_submission_attempts_absorbed = round(fight_data.get('sub_attempts_absorbed', 0) / total_fights, 2)
+
+                avg_fight_time_min = round(fight_data.get('total_time_minutes', 0) / total_fights, 2)
+            else:
+                avg_knockdowns_landed = 0
+                avg_knockdowns_absorbed = 0
+                avg_strikes_landed = 0
+                avg_strikes_absorbed = 0
+                avg_takedowns_landed = 0
+                avg_takedowns_absorbed = 0
+                avg_submission_attempts_landed = 0
+                avg_submission_attempts_absorbed = 0
+                avg_fight_time_min = 0
+
             # prepare data
             row = [
                 fighter_id,
@@ -237,13 +261,17 @@ class UFCStatsSpider:
                 fight_data.get('total_time_minutes'),
                 fight_data.get('last_fight_date'),
                 fight_data.get('last_win_date'),
+                avg_knockdowns_landed,
+                avg_knockdowns_absorbed,
+                avg_strikes_landed,
+                avg_strikes_absorbed,
+                avg_takedowns_landed,
+                avg_takedowns_absorbed,
+                avg_submission_attempts_landed,
+                avg_submission_attempts_absorbed,
+                avg_fight_time_min,
+                datetime.datetime.now().isoformat()
             ]
-            
-            # add placeholders
-            row.extend([''] * 9)
-            
-            # add timestamp
-            row[-1] = datetime.datetime.now().isoformat()
             
             writer.writerow(row)
 
