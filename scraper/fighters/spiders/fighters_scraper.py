@@ -52,7 +52,8 @@ class UFCStatsSpider:
                 'wins_by_dec','losses_by_dec','wins_by_sub','losses_by_sub','wins_by_ko','losses_by_ko',
                 'knockdowns_landed', 'knockdowns_absorbed', 'strikes_landed', 'strikes_absorbed',
                 'takedowns_landed', 'takedowns_absorbed', 'sub_attempts_landed', 'sub_attempts_absorbed',
-                'total_rounds', 'total_time_minutes', 'avg_knockdowns', 'avg_strikes_landed', 'avg_strikes_absorbed',
+                'total_rounds', 'total_time_minutes', 'last_fight_date', 'last_win_date',
+                'avg_knockdowns', 'avg_strikes_landed', 'avg_strikes_absorbed',
                 'avg_takedowns_landed', 'avg_takedowns_absorbed', 'avg_submission_attempts_landed',
                 'avg_submission_attempts_absorbed', 'avg_fight_time_min', 'updated_timestamp'
             ])
@@ -239,7 +240,7 @@ class UFCStatsSpider:
             ]
             
             # add placeholders
-            row.extend([''] * 7)
+            row.extend([''] * 9)
             
             # add timestamp
             row[-1] = datetime.datetime.now().isoformat()
