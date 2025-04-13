@@ -215,13 +215,13 @@ def extract_career_statistics(soup: BeautifulSoup) -> Dict[str, float]:
 
     return result
 
-def extract_fights(soup: BeautifulSoup) -> Dict[str, Any]:
+def extract_fights(soup: BeautifulSoup, fight_date_limit : Optional[datetime.datetime] = None) -> Dict[str, Any]:
     """
     Extracts the fight data from the fighter's previous matches
 
     Args:
         soup: Fighter's page
-        skip: Number of fights to skip
+        fight_date_limit: Limit to only consider fights before this date
     Returns:
         Dictionary that returns fighter's fight data statistics
     """
@@ -274,8 +274,7 @@ def extract_fights(soup: BeautifulSoup) -> Dict[str, Any]:
         if result.lower() == "next":
             continue
 
-        fighter_stats['total_ufc_fights'] += 1
-
+        should_skip = False
         try:
             date_paragraphs = cells[6].select('p')
             if len(date_paragraphs) > 1:
@@ -293,11 +292,20 @@ def extract_fights(soup: BeautifulSoup) -> Dict[str, Any]:
 
                     if result == 'win' and fighter_stats['last_win_date'] is None:
                         fighter_stats['last_win_date'] = fight_date
-                except:
-                    pass  # if error we continue
+                    
+                    # skip if date limit is set and fight date is not before limit
+                    if fight_date_limit and fight_date >= fight_date_limit:
+                        should_skip = True
+                        
+                except Exception as e:
+                    logger.debug(f"Error parsing fight date: {date_text}, error: {e}")
         except IndexError:
             pass  # continue if date extraction fails
 
+        if should_skip:
+            continue
+
+        fighter_stats['total_ufc_fights'] += 1
 
         # method of victory/defeat
         method = row.select('td')[7].select('p')[0].get_text(strip=True)
@@ -368,5 +376,7 @@ if __name__ == '__main__':
     response = requests.get(fighter_url)
     soup = BeautifulSoup(response.content, 'html.parser')
 
-    stats = extract_fights(soup)
+    fight_date_limit = datetime.datetime.strptime("September 09, 2023", "%B %d, %Y")
+    stats = extract_fights(soup, fight_date_limit)
+
     print(stats)
