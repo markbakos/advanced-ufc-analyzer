@@ -215,13 +215,13 @@ def extract_career_statistics(soup: BeautifulSoup) -> Dict[str, float]:
 
     return result
 
-def extract_fights(soup: BeautifulSoup) -> Dict[str, Any]:
+def extract_fights(soup: BeautifulSoup, skip: int = 0) -> Dict[str, Any]:
     """
     Extracts the fight data from the fighter's previous matches
 
     Args:
         soup: Fighter's page
-
+        skip: Number of fights to skip
     Returns:
         Dictionary that returns fighter's fight data statistics
     """
@@ -263,6 +263,10 @@ def extract_fights(soup: BeautifulSoup) -> Dict[str, Any]:
         # check if valid fight row
         cells = row.select('td')
         if len(cells) < 7:
+            continue
+
+        if skip > 0:
+            skip -= 1
             continue
 
         fighter_stats['total_ufc_fights'] += 1
@@ -365,5 +369,5 @@ if __name__ == '__main__':
     response = requests.get(fighter_url)
     soup = BeautifulSoup(response.content, 'html.parser')
 
-    stats = extract_fights(soup)
+    stats = extract_fights(soup, skip=3)
     print(stats)
