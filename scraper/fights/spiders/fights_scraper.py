@@ -36,32 +36,32 @@ class UFCFightsSpider:
                 'event_name', 'event_date', 'location', 'result', 'win_method', 'time', 'round',
 
                 # fight stats
-                'blue_knockdowns_landed', 'blue_knockdowns_absorbed', 'blue_strikes_landed', 'blue_strikes_absorbed',
-                'blue_sig_strike_percent', 'blue_takedowns_landed', 'blue_takedowns_absorbed', 'blue_takedowns_attempted', 
-                'blue_takedowns_percent', 'blue_sub_attempts_landed', 'blue_sub_attempts_absorbed', 'blue_reversals', 'blue_control_time',
+                'blue_knockdowns_landed', 'blue_strikes_landed', 'blue_sig_strike_percent', 'blue_takedowns_landed', 'blue_takedowns_attempted', 
+                'blue_takedowns_percent', 'blue_sub_attempts_landed', 'blue_reversals', 'blue_control_time',
 
-                'red_knockdowns_landed', 'red_knockdowns_absorbed', 'red_strikes_landed', 'red_strikes_absorbed',
-                'red_sig_strike_percent', 'red_takedowns_landed', 'red_takedowns_absorbed', 'red_takedowns_attempted',
-                'red_takedowns_percent', 'red_sub_attempts_landed', 'red_sub_attempts_absorbed', 'red_reversals', 'red_control_time',
+                'red_knockdowns_landed', 'red_strikes_landed', 'red_sig_strike_percent', 'red_takedowns_landed', 'red_takedowns_attempted',
+                'red_takedowns_percent', 'red_sub_attempts_landed', 'red_reversals', 'red_control_time',
+
 
                 # snapshot of blue fighter stats
-                'blue_total_ufc_fights', 'blue_wins_in_ufc', 'blue_losses_in_ufc', 'blue_draws_in_ufc',
-                'blue_wins_by_dec','blue_losses_by_dec','blue_wins_by_sub','blue_losses_by_sub','blue_wins_by_ko','blue_losses_by_ko',
-                'blue_knockdowns_landed', 'blue_knockdowns_absorbed', 'blue_strikes_landed', 'blue_strikes_absorbed',
-                'blue_takedowns_landed', 'blue_takedowns_absorbed', 'blue_sub_attempts_landed', 'blue_sub_attempts_absorbed',
-                'blue_total_rounds', 'blue_total_time_minutes', 'blue_last_fight_date', 'blue_last_win_date',
-                'blue_avg_knockdowns_landed', 'blue_avg_knockdowns_absorbed', 'blue_avg_strikes_landed', 'blue_avg_strikes_absorbed',
-                'blue_avg_takedowns_landed', 'blue_avg_takedowns_absorbed', 'blue_avg_submission_attempts_landed',
-                'blue_avg_submission_attempts_absorbed', 'blue_avg_fight_time_min',
+                'career_blue_total_ufc_fights', 'career_blue_wins_in_ufc', 'career_blue_losses_in_ufc', 'career_blue_draws_in_ufc',
+                'career_blue_wins_by_dec','career_blue_losses_by_dec','career_blue_wins_by_sub','career_blue_losses_by_sub','career_blue_wins_by_ko','career_blue_losses_by_ko',
+                'career_blue_knockdowns_landed', 'career_blue_knockdowns_absorbed', 'career_blue_strikes_landed', 'career_blue_strikes_absorbed',
+                'career_blue_takedowns_landed', 'career_blue_takedowns_absorbed', 'career_blue_sub_attempts_landed', 'career_blue_sub_attempts_absorbed',
+                'career_blue_total_rounds', 'career_blue_total_time_minutes', 'career_blue_last_fight_date', 'career_blue_last_win_date',
+                'career_blue_avg_knockdowns_landed', 'career_blue_avg_knockdowns_absorbed', 'career_blue_avg_strikes_landed', 'career_blue_avg_strikes_absorbed',
+                'career_blue_avg_takedowns_landed', 'career_blue_avg_takedowns_absorbed', 'career_blue_avg_submission_attempts_landed',
+                'career_blue_avg_submission_attempts_absorbed', 'career_blue_avg_fight_time_min',
+
                 # snapshot of red fighter stats
-                'red_total_ufc_fights', 'red_wins_in_ufc', 'red_losses_in_ufc', 'red_draws_in_ufc',
-                'red_wins_by_dec','red_losses_by_dec','red_wins_by_sub','red_losses_by_sub','red_wins_by_ko','red_losses_by_ko',
-                'red_knockdowns_landed', 'red_knockdowns_absorbed', 'red_strikes_landed', 'red_strikes_absorbed',
-                'red_takedowns_landed', 'red_takedowns_absorbed', 'red_sub_attempts_landed', 'red_sub_attempts_absorbed',
-                'red_total_rounds', 'red_total_time_minutes', 'red_last_fight_date', 'red_last_win_date',
-                'red_avg_knockdowns_landed', 'red_avg_knockdowns_absorbed', 'red_avg_strikes_landed', 'red_avg_strikes_absorbed',
-                'red_avg_takedowns_landed', 'red_avg_takedowns_absorbed', 'red_avg_submission_attempts_landed',
-                'red_avg_submission_attempts_absorbed', 'red_avg_fight_time_min',
+                'career_red_total_ufc_fights', 'career_red_wins_in_ufc', 'career_red_losses_in_ufc', 'career_red_draws_in_ufc',
+                'career_red_wins_by_dec','career_red_losses_by_dec','career_red_wins_by_sub','career_red_losses_by_sub','career_red_wins_by_ko','career_red_losses_by_ko',
+                'career_red_knockdowns_landed', 'career_red_knockdowns_absorbed', 'career_red_strikes_landed', 'career_red_strikes_absorbed',
+                'career_red_takedowns_landed', 'career_red_takedowns_absorbed', 'career_red_sub_attempts_landed', 'career_red_sub_attempts_absorbed',
+                'career_red_total_rounds', 'career_red_total_time_minutes', 'career_red_last_fight_date', 'career_red_last_win_date',
+                'career_red_avg_knockdowns_landed', 'career_red_avg_knockdowns_absorbed', 'career_red_avg_strikes_landed', 'career_red_avg_strikes_absorbed',
+                'career_red_avg_takedowns_landed', 'career_red_avg_takedowns_absorbed', 'career_red_avg_submission_attempts_landed',
+                'career_red_avg_submission_attempts_absorbed', 'career_red_avg_fight_time_min',
 
                 'updated_timestamp'
             ])
