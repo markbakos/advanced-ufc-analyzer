@@ -7,7 +7,7 @@ from bs4 import BeautifulSoup
 LOGGER = logging.getLogger(__name__)
 
 # FOR TESTING, ONLY ONE PAGE
-TEST_RUN = False
+TEST_RUN = True
 
 class UFCFightsSpider:
     """
@@ -31,8 +31,10 @@ class UFCFightsSpider:
         with open(self.output_file, 'w', newline='', encoding='utf-8') as csvfile:
             writer = csv.writer(csvfile)
             writer.writerow([
+                # fight data
                 'fight_id', 'blue_fighter_id', 'red_fighter_id', 'blue_fighter_name', 'red_fighter_name',
                 'event_name', 'event_date', 'location', 'result', 'win_method', 'time', 'round',
+
                 # fight stats
                 'blue_knockdowns_landed', 'blue_knockdowns_absorbed', 'blue_strikes_landed', 'blue_strikes_absorbed',
                 'blue_sig_strike_percent', 'blue_takedowns_landed', 'blue_takedowns_absorbed', 'blue_takedowns_attempted', 
@@ -67,22 +69,18 @@ class UFCFightsSpider:
     def run(self) -> None:
         """
         Execute the spider's main workflow:
-        1. Collect all fight links
-        2. Process each fight's page
+        1. Collect all event links
+        2. Process each event's page to extract fights
         """
-        all_fight_links = self.collect_all_fight_links()
-        LOGGER.info(f"Found {len(all_fight_links)} unique fight links")
-
-        # for fight_url in all_fight_links:
-        #     self.parse_fight_stats(fight_url)
-        #     time.sleep(1)
+        all_event_links = self.collect_all_event_links()
+        LOGGER.info(f"Found {len(all_event_links)} unique event links")
             
-    def collect_all_fight_links(self) -> Set[str]:
+    def collect_all_event_links(self) -> Set[str]:
         """
-        Collects links to all fight profile pages
+        Collects links to all event profile pages
         
         Returns:
-            Set of unique fight profile URLs
+            Set of unique event profile URLs
         """
 
         all_links = set()
@@ -93,7 +91,7 @@ class UFCFightsSpider:
         if not html:
             return all_links
 
-        links = self.extract_fight_page_links(html)
+        links = self.extract_event_page_links(html)
         all_links.update(links)
 
         LOGGER.info(f"Found {len(all_links)} unique links")
@@ -118,33 +116,80 @@ class UFCFightsSpider:
             LOGGER.error(f"Error fetching page {url}: {e}")
             return None
     
-    def extract_fight_page_links(self, html: str) -> Set[str]:
+    def extract_event_page_links(self, html: str) -> Set[str]:
         """
-        Extracts fight profile links from a listing page
+        Extracts event profile links from a listing page
         
         Args:
             html: HTML content of the listing page
         
         Returns:
-            Set of unique fight profile URLs
+            Set of unique events URLs
         """
 
         links = set()
         soup = BeautifulSoup(html, 'html.parser')
-        fight_rows = soup.select('table.b-statistics__table-events tbody tr')
+        event_rows = soup.select('table.b-statistics__table-events tbody tr')
         
-        if not fight_rows:
-            fight_rows = soup.select('table.b-statistics__table-events tbody tr')
+        if not event_rows:
+            LOGGER.warning("Could not find event rows on the page")
+            return links
 
-        LOGGER.info(f"Found {len(fight_rows)} fight rows")
+        LOGGER.info(f"Found {len(event_rows)} event rows")
 
-        for fight_row in fight_rows:
-            link_elem = fight_row.select_one('td a')
+        for event_row in event_rows:
+            link_elem = event_row.select_one('td a')
             if link_elem and link_elem.get('href'):
-                fight_url = link_elem.get('href')
-                links.add(fight_url)
+                event_url = link_elem.get('href')
+                links.add(event_url)
+                LOGGER.info(f"Found event: {event_url}")
+                
+                # extract fights from this event
+                self.extract_fight_links(event_url)
+                time.sleep(1)
 
         return links
+
+    def extract_fight_links(self, event_url: str) -> Set[str]:
+        """
+        Extracts fight links from an event page
+        
+        Args:
+            event_url: URL of the event page
+            
+        Returns:
+            Set of unique fight URLs
+        """
+        links = set()
+        
+        html = self.fetch_page(event_url)
+        if not html:
+            return links
+            
+        soup = BeautifulSoup(html, 'html.parser')
+        
+        fight_table = soup.select_one('table.b-fight-details__table.b-fight-details__table_style_margin-top.b-fight-details__table_type_event-details')
+        if not fight_table:
+            LOGGER.warning(f"Could not find fight table on page: {event_url}")
+            return links
+                
+        fight_rows = fight_table.select('tbody tr:not(.b-fight-details__table-row__head)')
+        
+        LOGGER.info(f"Found {len(fight_rows)} fight rows on event page: {event_url}")
+        
+        for fight_row in fight_rows:
+            fight_link = fight_row.select_one('td:first-child a.b-flag')
+            if fight_link and fight_link.get('href'):
+                fight_url = fight_link.get('href')
+                links.add(fight_url)
+                LOGGER.info(f"Found fight: {fight_url}")
+                
+                # process this fight
+                # self.parse_fight_stats(fight_url)
+                time.sleep(1)
+        
+        return links
+
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(message)s')
