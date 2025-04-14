@@ -7,7 +7,7 @@ from bs4 import BeautifulSoup
 LOGGER = logging.getLogger(__name__)
 
 # FOR TESTING, ONLY ONE PAGE
-TEST_RUN = True
+TEST_RUN = False
 
 class UFCFightsSpider:
     """
@@ -131,10 +131,10 @@ class UFCFightsSpider:
 
         links = set()
         soup = BeautifulSoup(html, 'html.parser')
-        fight_rows = soup.select('table.b-statistics__table-col tbody tr')
+        fight_rows = soup.select('table.b-statistics__table-events tbody tr')
         
         if not fight_rows:
-            fight_rows = soup.select('table.b-statistics__table tbody tr')
+            fight_rows = soup.select('table.b-statistics__table-events tbody tr')
 
         LOGGER.info(f"Found {len(fight_rows)} fight rows")
 
