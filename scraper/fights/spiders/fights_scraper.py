@@ -87,7 +87,7 @@ class UFCFightsSpider:
 
         all_links = set()
 
-        url = f"http://ufcstats.com/statistics/events/completed{'&page=all' if not TEST_RUN else ''}"
+        url = f"http://ufcstats.com/statistics/events/completed{'?page=all' if not TEST_RUN else ''}"
 
         html = self.fetch_page(url)
         if not html:
