@@ -138,6 +138,12 @@ class UFCFightsSpider:
         LOGGER.info(f"Found {len(event_rows)} event rows")
 
         for event_row in event_rows:
+
+            # skip upcoming events
+            img_elem = event_row.select_one('td img')
+            if img_elem:
+                continue
+
             link_elem = event_row.select_one('td a')
             if link_elem and link_elem.get('href'):
                 event_url = link_elem.get('href')
