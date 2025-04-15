@@ -2,9 +2,12 @@ import requests
 import csv
 import logging
 import time
-from typing import Set, Optional
+from typing import Set, Optional, Dict, Any
 from bs4 import BeautifulSoup
-from scraper.fights.extractors import extract_fight_data
+from scraper.fights.extractors import (
+    extract_fighters,
+    extract_fight_data
+)
 
 LOGGER = logging.getLogger(__name__)
 
@@ -33,9 +36,12 @@ class UFCFightsSpider:
         with open(self.output_file, 'w', newline='', encoding='utf-8') as csvfile:
             writer = csv.writer(csvfile)
             writer.writerow([
+                # fighter data
+                'fight_id', 'event_name', 'event_date', 'location', 'red_fighter_name', 'blue_fighter_name',
+                'red_fighter_id', 'blue_fighter_id',
+
                 # fight data
-                'fight_id', 'blue_fighter_id', 'red_fighter_id', 'blue_fighter_name', 'red_fighter_name',
-                'event_name', 'event_date', 'location', 'result', 'win_method', 'time', 'round',
+                'result', 'win_method', 'time', 'round',
 
                 # fight stats
                 'red_knockdowns_landed', 'red_strikes_landed', 'red_sig_strike_percent', 'red_takedowns_landed', 'red_takedowns_attempted',
@@ -250,8 +256,30 @@ class UFCFightsSpider:
         fight_id = fight_url.split('/')[-1]
 
         # extract fight data
-        fight_data = extract_fight_data(soup)
-        LOGGER.info(f"Fight data: {fight_data}")
+        fighters_data = extract_fighters(soup)
+
+        self._save_fight_data(fight_id, event_data, fighters_data)
+
+    def _save_fight_data(self, fight_id: str, event_data: Dict[str, Any], fighters_data: Dict[str, Any]) -> None:
+        """
+        Saves the fight data to the CSV file
+        """
+
+        LOGGER.info(f"{event_data} + {fighters_data}")
+        
+        with open(self.output_file, 'a', newline='', encoding='utf-8') as csvfile:
+            writer = csv.writer(csvfile)
+            writer.writerow([
+                fight_id,
+                event_data['event_name'],
+                event_data['event_date'],
+                event_data['event_location'],
+                fighters_data['red_fighter'],
+                fighters_data['blue_fighter'],
+                fighters_data['red_fighter_id'],
+                fighters_data['blue_fighter_id'],
+                fighters_data['result']
+            ])
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(message)s')
