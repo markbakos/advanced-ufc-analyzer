@@ -38,22 +38,11 @@ class UFCFightsSpider:
                 'event_name', 'event_date', 'location', 'result', 'win_method', 'time', 'round',
 
                 # fight stats
-                'blue_knockdowns_landed', 'blue_strikes_landed', 'blue_sig_strike_percent', 'blue_takedowns_landed', 'blue_takedowns_attempted', 
-                'blue_takedowns_percent', 'blue_sub_attempts_landed', 'blue_reversals', 'blue_control_time',
-
                 'red_knockdowns_landed', 'red_strikes_landed', 'red_sig_strike_percent', 'red_takedowns_landed', 'red_takedowns_attempted',
                 'red_takedowns_percent', 'red_sub_attempts_landed', 'red_reversals', 'red_control_time',
 
-
-                # snapshot of blue fighter stats
-                'career_blue_total_ufc_fights', 'career_blue_wins_in_ufc', 'career_blue_losses_in_ufc', 'career_blue_draws_in_ufc',
-                'career_blue_wins_by_dec','career_blue_losses_by_dec','career_blue_wins_by_sub','career_blue_losses_by_sub','career_blue_wins_by_ko','career_blue_losses_by_ko',
-                'career_blue_knockdowns_landed', 'career_blue_knockdowns_absorbed', 'career_blue_strikes_landed', 'career_blue_strikes_absorbed',
-                'career_blue_takedowns_landed', 'career_blue_takedowns_absorbed', 'career_blue_sub_attempts_landed', 'career_blue_sub_attempts_absorbed',
-                'career_blue_total_rounds', 'career_blue_total_time_minutes', 'career_blue_last_fight_date', 'career_blue_last_win_date',
-                'career_blue_avg_knockdowns_landed', 'career_blue_avg_knockdowns_absorbed', 'career_blue_avg_strikes_landed', 'career_blue_avg_strikes_absorbed',
-                'career_blue_avg_takedowns_landed', 'career_blue_avg_takedowns_absorbed', 'career_blue_avg_submission_attempts_landed',
-                'career_blue_avg_submission_attempts_absorbed', 'career_blue_avg_fight_time_min',
+                'blue_knockdowns_landed', 'blue_strikes_landed', 'blue_sig_strike_percent', 'blue_takedowns_landed', 'blue_takedowns_attempted', 
+                'blue_takedowns_percent', 'blue_sub_attempts_landed', 'blue_reversals', 'blue_control_time',
 
                 # snapshot of red fighter stats
                 'career_red_total_ufc_fights', 'career_red_wins_in_ufc', 'career_red_losses_in_ufc', 'career_red_draws_in_ufc',
@@ -64,6 +53,16 @@ class UFCFightsSpider:
                 'career_red_avg_knockdowns_landed', 'career_red_avg_knockdowns_absorbed', 'career_red_avg_strikes_landed', 'career_red_avg_strikes_absorbed',
                 'career_red_avg_takedowns_landed', 'career_red_avg_takedowns_absorbed', 'career_red_avg_submission_attempts_landed',
                 'career_red_avg_submission_attempts_absorbed', 'career_red_avg_fight_time_min',
+
+                # snapshot of blue fighter stats
+                'career_blue_total_ufc_fights', 'career_blue_wins_in_ufc', 'career_blue_losses_in_ufc', 'career_blue_draws_in_ufc',
+                'career_blue_wins_by_dec','career_blue_losses_by_dec','career_blue_wins_by_sub','career_blue_losses_by_sub','career_blue_wins_by_ko','career_blue_losses_by_ko',
+                'career_blue_knockdowns_landed', 'career_blue_knockdowns_absorbed', 'career_blue_strikes_landed', 'career_blue_strikes_absorbed',
+                'career_blue_takedowns_landed', 'career_blue_takedowns_absorbed', 'career_blue_sub_attempts_landed', 'career_blue_sub_attempts_absorbed',
+                'career_blue_total_rounds', 'career_blue_total_time_minutes', 'career_blue_last_fight_date', 'career_blue_last_win_date',
+                'career_blue_avg_knockdowns_landed', 'career_blue_avg_knockdowns_absorbed', 'career_blue_avg_strikes_landed', 'career_blue_avg_strikes_absorbed',
+                'career_blue_avg_takedowns_landed', 'career_blue_avg_takedowns_absorbed', 'career_blue_avg_submission_attempts_landed',
+                'career_blue_avg_submission_attempts_absorbed', 'career_blue_avg_fight_time_min',
 
                 'updated_timestamp'
             ])
@@ -251,8 +250,8 @@ class UFCFightsSpider:
         fight_id = fight_url.split('/')[-1]
 
         # extract fight data
-        # fight_data = extract_fight_data(soup)
-        LOGGER.info(f"Fight data: {event_data}")
+        fight_data = extract_fight_data(soup)
+        LOGGER.info(f"Fight data: {fight_data}")
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(message)s')
