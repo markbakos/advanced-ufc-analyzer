@@ -188,14 +188,14 @@ class UFCFightsSpider:
         details_box = soup.select_one('ul.b-list__box-list')
         if details_box:
             # extract date
-            date_item = details_box.select_one('li.b-list__box-list-item:has(i:contains("Date:"))')
+            date_item = details_box.select_one('li.b-list__box-list-item:has(i:-soup-contains("Date:"))')
             if date_item:
                 date_text = date_item.get_text(strip=True).replace('Date:', '').strip()
                 event_date = date_text
                 LOGGER.info(f"Event date: {event_date}")
                 
             # extract location
-            location_item = details_box.select_one('li.b-list__box-list-item:has(i:contains("Location:"))')
+            location_item = details_box.select_one('li.b-list__box-list-item:has(i:-soup-contains("Location:"))')
             if location_item:
                 location_text = location_item.get_text(strip=True).replace('Location:', '').strip()
                 event_location = location_text
