@@ -6,7 +6,8 @@ from typing import Set, Optional, Dict, Any
 from bs4 import BeautifulSoup
 from scraper.fights.extractors import (
     extract_fighters,
-    extract_fight_data
+    extract_fight_data,
+    extract_fight_stats,
 )
 
 LOGGER = logging.getLogger(__name__)
@@ -44,11 +45,11 @@ class UFCFightsSpider:
                 'win_method', 'time', 'round', 'total_rounds', 'referee',
 
                 # fight stats
-                'red_knockdowns_landed', 'red_strikes_landed', 'red_sig_strike_percent', 'red_takedowns_landed', 'red_takedowns_attempted',
-                'red_takedowns_percent', 'red_sub_attempts_landed', 'red_reversals', 'red_control_time',
+                'red_knockdowns_landed', 'red_sig_strikes_landed', 'red_sig_strikes_thrown', 'red_sig_strike_percent', 'red_total_strikes_landed', 
+                'red_total_strikes_thrown', 'red_takedowns_landed', 'red_takedowns_attempted', 'red_takedowns_percent', 'red_sub_attempts', 'red_reversals', 'red_control_time',
 
-                'blue_knockdowns_landed', 'blue_strikes_landed', 'blue_sig_strike_percent', 'blue_takedowns_landed', 'blue_takedowns_attempted', 
-                'blue_takedowns_percent', 'blue_sub_attempts_landed', 'blue_reversals', 'blue_control_time',
+                'blue_knockdowns_landed', 'blue_sig_strikes_landed', 'blue_sig_strikes_thrown', 'blue_sig_strike_percent', 'blue_total_strikes_landed', 
+                'blue_total_strikes_thrown', 'blue_takedowns_landed', 'blue_takedowns_attempted', 'blue_takedowns_percent', 'blue_sub_attempts', 'blue_reversals', 'blue_control_time',
 
                 # snapshot of red fighter stats
                 'career_red_total_ufc_fights', 'career_red_wins_in_ufc', 'career_red_losses_in_ufc', 'career_red_draws_in_ufc',
@@ -243,6 +244,7 @@ class UFCFightsSpider:
         
         html = self.fetch_page(fight_url)
         if not html:
+            LOGGER.error(f"Could not fetch fight page: {fight_url}")
             return
 
         soup = BeautifulSoup(html, 'html.parser')
@@ -258,9 +260,11 @@ class UFCFightsSpider:
         # extract fight data
         fighters_data = extract_fighters(soup)
         fight_data = extract_fight_data(soup)
-        self._save_fight_data(fight_id, event_data, fighters_data, fight_data)
+        fight_stats = extract_fight_stats(soup)
+        self._save_fight_data(fight_id, event_data, fighters_data, fight_data, fight_stats)
 
-    def _save_fight_data(self, fight_id: str, event_data: Dict[str, Any], fighters_data: Dict[str, Any], fight_data: Dict[str, Any]) -> None:
+    def _save_fight_data(self, fight_id: str, event_data: Dict[str, Any], fighters_data: Dict[str, Any], fight_data: Dict[str, Any],
+                         fight_stats: Dict[str, Any]) -> None:
         """
         Saves the fight data to the CSV file
         """
@@ -281,7 +285,31 @@ class UFCFightsSpider:
                 fight_data['time'],
                 fight_data['round'],
                 fight_data['total_rounds'],
-                fight_data['referee']
+                fight_data['referee'],
+                fight_stats['red_knockdowns_landed'],
+                fight_stats['red_sig_strikes_landed'],
+                fight_stats['red_sig_strikes_thrown'],
+                fight_stats['red_sig_strike_percent'],
+                fight_stats['red_total_strikes_landed'],
+                fight_stats['red_total_strikes_thrown'],
+                fight_stats['red_takedowns_landed'],
+                fight_stats['red_takedowns_attempted'],
+                fight_stats['red_takedowns_percent'],
+                fight_stats['red_sub_attempts'],
+                fight_stats['red_reversals'],
+                fight_stats['red_control_time'],
+                fight_stats['blue_knockdowns_landed'],
+                fight_stats['blue_sig_strikes_landed'],
+                fight_stats['blue_sig_strikes_thrown'],
+                fight_stats['blue_sig_strike_percent'],
+                fight_stats['blue_total_strikes_landed'],
+                fight_stats['blue_total_strikes_thrown'],
+                fight_stats['blue_takedowns_landed'],
+                fight_stats['blue_takedowns_attempted'],
+                fight_stats['blue_takedowns_percent'],
+                fight_stats['blue_sub_attempts'],
+                fight_stats['blue_reversals'],
+                fight_stats['blue_control_time'],
             ])
 
 if __name__ == '__main__':
