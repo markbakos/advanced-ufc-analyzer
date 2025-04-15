@@ -4,6 +4,8 @@ import logging
 import time
 from typing import Set, Optional
 from bs4 import BeautifulSoup
+from scraper.fights.extractors import extract_fight_data
+
 LOGGER = logging.getLogger(__name__)
 
 # FOR TESTING, ONLY ONE PAGE
@@ -138,7 +140,6 @@ class UFCFightsSpider:
         LOGGER.info(f"Found {len(event_rows)} event rows")
 
         for event_row in event_rows:
-
             # skip upcoming events
             img_elem = event_row.select_one('td img')
             if img_elem:
@@ -173,7 +174,35 @@ class UFCFightsSpider:
             return links
             
         soup = BeautifulSoup(html, 'html.parser')
+
+        # extract event details
+        event_date = None
+        event_location = None
         
+        # find the event details box
+        details_box = soup.select_one('ul.b-list__box-list')
+        if details_box:
+            # extract date
+            date_item = details_box.select_one('li.b-list__box-list-item:has(i:contains("Date:"))')
+            if date_item:
+                date_text = date_item.get_text(strip=True).replace('Date:', '').strip()
+                event_date = date_text
+                LOGGER.info(f"Event date: {event_date}")
+                
+            # extract location
+            location_item = details_box.select_one('li.b-list__box-list-item:has(i:contains("Location:"))')
+            if location_item:
+                location_text = location_item.get_text(strip=True).replace('Location:', '').strip()
+                event_location = location_text
+                LOGGER.info(f"Event location: {event_location}")
+
+        # extract event name
+        event_name = soup.select_one('.b-content__title-highlight')
+        if event_name:
+            event_name = event_name.get_text(strip=True)
+            LOGGER.info(f"Event name: {event_name}")
+        
+        # extract fight links
         fight_table = soup.select_one('table.b-fight-details__table.b-fight-details__table_style_margin-top.b-fight-details__table_type_event-details')
         if not fight_table:
             LOGGER.warning(f"Could not find fight table on page: {event_url}")
@@ -191,11 +220,39 @@ class UFCFightsSpider:
                 LOGGER.info(f"Found fight: {fight_url}")
                 
                 # process this fight
-                # self.parse_fight_stats(fight_url)
+                self.parse_fight_stats(fight_url, event_date, event_location, event_name)
                 time.sleep(1)
         
         return links
 
+    def parse_fight_stats(self, fight_url: str, event_date: str, event_location: str, event_name: str) -> None:
+        """
+        Parses and saves statistics for a single fight
+        
+        Args:
+            fight_url: URL of the fight page
+            event_date: Date of the event
+            event_location: Location of the event
+            event_name: Name of the event
+        """
+        
+        html = self.fetch_page(fight_url)
+        if not html:
+            return
+
+        soup = BeautifulSoup(html, 'html.parser')
+
+        event_data = {
+            'event_date': event_date,
+            'event_location': event_location,
+            'event_name': event_name
+        }
+
+        fight_id = fight_url.split('/')[-1]
+
+        # extract fight data
+        # fight_data = extract_fight_data(soup)
+        LOGGER.info(f"Fight data: {event_data}")
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(message)s')
