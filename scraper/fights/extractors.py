@@ -70,8 +70,6 @@ def extract_fighters(soup: BeautifulSoup) -> Dict[str, Any]:
                 result['result'] = 'draw'
             else:
                 result['result'] = 'unknown'
-                
-        LOGGER.info(f"Extracted fighters: {result['red_fighter']} vs {result['blue_fighter']}, Result: {result['result']}")
 
     except Exception as e:
         LOGGER.error(f"Error extracting fighters: {e}")
