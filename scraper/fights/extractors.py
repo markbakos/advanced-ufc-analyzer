@@ -84,14 +84,53 @@ def extract_fight_data(soup: BeautifulSoup) -> Dict[str, Any]:
     result = {
         'win_method': None,
         'round': None,
+        'total_rounds': None,
         'time': None,
-        'time_format': None,
-        'referee': None,
-        'details': None
+        'referee': None
     }
 
     try:
-        pass
+        fight_details_content = soup.select_one('div.b-fight-details__content')
+        if not fight_details_content:
+            LOGGER.warning(f"Could not find fight details content on page")
+            return result
+        
+        fight_details_text = fight_details_content.select_one('p.b-fight-details__text')
+        if not fight_details_text:
+            LOGGER.warning(f"Could not find fight details text on page")
+            return result
+        
+        # extract method
+        method_item = fight_details_text.select_one('i.b-fight-details__text-item_first:has(i.b-fight-details__label:-soup-contains("Method:"))')
+        if method_item:
+            method_text = method_item.select_one('i[style="font-style: normal"]')
+            if method_text:
+                result['win_method'] = method_text.get_text(strip=True)
+        
+        # extract round
+        round_item = fight_details_text.select_one('i.b-fight-details__text-item:has(i.b-fight-details__label:-soup-contains("Round:"))')
+        if round_item:
+            round_text = round_item.get_text(strip=True).replace('Round:', '').strip()
+            result['round'] = round_text
+        
+        # extract time
+        time_item = fight_details_text.select_one('i.b-fight-details__text-item:has(i.b-fight-details__label:-soup-contains("Time:"))')
+        if time_item:
+            time_text = time_item.get_text(strip=True).replace('Time:', '').strip()
+            result['time'] = time_text
+        
+        # extract time format
+        time_format_item = fight_details_text.select_one('i.b-fight-details__text-item:has(i.b-fight-details__label:-soup-contains("Time format:"))')
+        if time_format_item:
+            time_format_text = time_format_item.get_text(strip=True).replace('Time format:', '').strip()
+            result['total_rounds'] = time_format_text.split(' ')[0]
+        
+        # extract referee
+        referee_item = fight_details_text.select_one('i.b-fight-details__text-item:has(i.b-fight-details__label:-soup-contains("Referee:"))')
+        if referee_item:
+            referee_span = referee_item.select_one('span')
+            if referee_span:
+                result['referee'] = referee_span.get_text(strip=True)
 
     except Exception as e:
         LOGGER.error(f"Error extracting fight data: {e}")
