@@ -51,6 +51,12 @@ class UFCFightsSpider:
                 'blue_knockdowns_landed', 'blue_sig_strikes_landed', 'blue_sig_strikes_thrown', 'blue_sig_strike_percent', 'blue_total_strikes_landed', 
                 'blue_total_strikes_thrown', 'blue_takedowns_landed', 'blue_takedowns_attempted', 'blue_takedowns_percent', 'blue_sub_attempts', 'blue_reversals', 'blue_control_time',
 
+                'red_head_strikes_landed', 'red_head_strikes_thrown', 'red_body_strikes_landed', 'red_body_strikes_thrown', 'red_leg_strikes_landed', 'red_leg_strikes_thrown',
+                'red_distance_strikes_landed', 'red_distance_strikes_thrown', 'red_clinch_strikes_landed', 'red_clinch_strikes_thrown', 'red_ground_strikes_landed', 'red_ground_strikes_thrown',
+
+                'blue_head_strikes_landed', 'blue_head_strikes_thrown', 'blue_body_strikes_landed', 'blue_body_strikes_thrown', 'blue_leg_strikes_landed', 'blue_leg_strikes_thrown', 
+                'blue_distance_strikes_landed', 'blue_distance_strikes_thrown', 'blue_clinch_strikes_landed', 'blue_clinch_strikes_thrown', 'blue_ground_strikes_landed', 'blue_ground_strikes_thrown',
+
                 # snapshot of red fighter stats
                 'career_red_total_ufc_fights', 'career_red_wins_in_ufc', 'career_red_losses_in_ufc', 'career_red_draws_in_ufc',
                 'career_red_wins_by_dec','career_red_losses_by_dec','career_red_wins_by_sub','career_red_losses_by_sub','career_red_wins_by_ko','career_red_losses_by_ko',
@@ -260,7 +266,7 @@ class UFCFightsSpider:
         # extract fight data
         fighters_data = extract_fighters(soup)
         fight_data = extract_fight_data(soup)
-        fight_stats = extract_fight_stats(soup)
+        fight_stats = extract_fight_stats(soup, int(fight_data['round']))
         self._save_fight_data(fight_id, event_data, fighters_data, fight_data, fight_stats)
 
     def _save_fight_data(self, fight_id: str, event_data: Dict[str, Any], fighters_data: Dict[str, Any], fight_data: Dict[str, Any],
@@ -310,6 +316,30 @@ class UFCFightsSpider:
                 fight_stats['blue_sub_attempts'],
                 fight_stats['blue_reversals'],
                 fight_stats['blue_control_time'],
+                fight_stats['red_head_strikes_landed'],
+                fight_stats['red_head_strikes_thrown'],
+                fight_stats['red_body_strikes_landed'],
+                fight_stats['red_body_strikes_thrown'],
+                fight_stats['red_leg_strikes_landed'],
+                fight_stats['red_leg_strikes_thrown'],
+                fight_stats['red_distance_strikes_landed'],
+                fight_stats['red_distance_strikes_thrown'],
+                fight_stats['red_clinch_strikes_landed'],
+                fight_stats['red_clinch_strikes_thrown'],
+                fight_stats['red_ground_strikes_landed'],
+                fight_stats['red_ground_strikes_thrown'],
+                fight_stats['blue_head_strikes_landed'],
+                fight_stats['blue_head_strikes_thrown'],
+                fight_stats['blue_body_strikes_landed'],
+                fight_stats['blue_body_strikes_thrown'],
+                fight_stats['blue_leg_strikes_landed'],
+                fight_stats['blue_leg_strikes_thrown'],
+                fight_stats['blue_distance_strikes_landed'],
+                fight_stats['blue_distance_strikes_thrown'],
+                fight_stats['blue_clinch_strikes_landed'],
+                fight_stats['blue_clinch_strikes_thrown'],
+                fight_stats['blue_ground_strikes_landed'],
+                fight_stats['blue_ground_strikes_thrown'],
             ])
 
 if __name__ == '__main__':

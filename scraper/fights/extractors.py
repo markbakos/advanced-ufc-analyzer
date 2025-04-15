@@ -138,7 +138,7 @@ def extract_fight_data(soup: BeautifulSoup) -> Dict[str, Any]:
 
     return result
 
-def extract_fight_stats(soup: BeautifulSoup) -> Dict[str, Any]:
+def extract_fight_stats(soup: BeautifulSoup, rounds: int) -> Dict[str, Any]:
     """
     Extracts the fight stats from the soup
     """
@@ -168,6 +168,32 @@ def extract_fight_stats(soup: BeautifulSoup) -> Dict[str, Any]:
             'blue_sub_attempts': None,
             'blue_reversals': None,
             'blue_control_time': None,
+
+            'red_head_strikes_landed': None,
+            'red_head_strikes_thrown': None,
+            'red_body_strikes_landed': None,
+            'red_body_strikes_thrown': None,
+            'red_leg_strikes_landed': None,
+            'red_leg_strikes_thrown': None,
+            'red_distance_strikes_landed': None,
+            'red_distance_strikes_thrown': None,
+            'red_clinch_strikes_landed': None,
+            'red_clinch_strikes_thrown': None,
+            'red_ground_strikes_landed': None,
+            'red_ground_strikes_thrown': None,
+
+            'blue_head_strikes_landed': None,
+            'blue_head_strikes_thrown': None,
+            'blue_body_strikes_landed': None,
+            'blue_body_strikes_thrown': None,
+            'blue_leg_strikes_landed': None,
+            'blue_leg_strikes_thrown': None,
+            'blue_distance_strikes_landed': None,
+            'blue_distance_strikes_thrown': None,
+            'blue_clinch_strikes_landed': None,
+            'blue_clinch_strikes_thrown': None,
+            'blue_ground_strikes_landed': None,
+            'blue_ground_strikes_thrown': None,
         }
 
     try:
@@ -259,6 +285,79 @@ def extract_fight_stats(soup: BeautifulSoup) -> Dict[str, Any]:
         if len(control_time_texts) >= 2:
             result['red_control_time'] = control_time_texts[0].get_text(strip=True)
             result['blue_control_time'] = control_time_texts[1].get_text(strip=True)
+
+        # extract strike detail table
+
+        total_strike_detail_table = stats_tables[1+rounds]
+        if not total_strike_detail_table:
+            LOGGER.warning(f"Could not find strike detail table on page")
+            return result
+
+        # extract all table cells
+        strike_detail_table_cells = total_strike_detail_table.select('td.b-fight-details__table-col')
+        if len(strike_detail_table_cells) < 9:
+            LOGGER.warning(f"Could not find all required table cells on page")
+            return result
+
+        # extract head strikes landed (fourth column)
+        head_strikes_landed_cell = strike_detail_table_cells[3]
+        head_strikes_landed_texts = head_strikes_landed_cell.select('p.b-fight-details__table-text')
+        if len(head_strikes_landed_texts) >= 2:
+            result['red_head_strikes_landed'] = head_strikes_landed_texts[0].get_text(strip=True).split(' ')[0]
+            result['blue_head_strikes_landed'] = head_strikes_landed_texts[1].get_text(strip=True).split(' ')[0]
+
+            result['red_head_strikes_thrown'] = head_strikes_landed_texts[0].get_text(strip=True).split(' ')[-1]
+            result['blue_head_strikes_thrown'] = head_strikes_landed_texts[1].get_text(strip=True).split(' ')[-1]
+            
+        # extract body strikes landed (fifth column)
+        body_strikes_landed_cell = strike_detail_table_cells[4]
+        body_strikes_landed_texts = body_strikes_landed_cell.select('p.b-fight-details__table-text')
+        if len(body_strikes_landed_texts) >= 2:
+            result['red_body_strikes_landed'] = body_strikes_landed_texts[0].get_text(strip=True).split(' ')[0]
+            result['blue_body_strikes_landed'] = body_strikes_landed_texts[1].get_text(strip=True).split(' ')[0]
+
+            result['red_body_strikes_thrown'] = body_strikes_landed_texts[0].get_text(strip=True).split(' ')[-1]
+            result['blue_body_strikes_thrown'] = body_strikes_landed_texts[1].get_text(strip=True).split(' ')[-1]
+        
+        # extract leg strikes landed (sixth column)
+        leg_strikes_landed_cell = strike_detail_table_cells[5]
+        leg_strikes_landed_texts = leg_strikes_landed_cell.select('p.b-fight-details__table-text')
+        if len(leg_strikes_landed_texts) >= 2:
+            result['red_leg_strikes_landed'] = leg_strikes_landed_texts[0].get_text(strip=True).split(' ')[0]
+            result['blue_leg_strikes_landed'] = leg_strikes_landed_texts[1].get_text(strip=True).split(' ')[0]
+
+            result['red_leg_strikes_thrown'] = leg_strikes_landed_texts[0].get_text(strip=True).split(' ')[-1]
+            result['blue_leg_strikes_thrown'] = leg_strikes_landed_texts[1].get_text(strip=True).split(' ')[-1]
+        
+        # extract distance strikes landed (seventh column)
+        distance_strikes_landed_cell = strike_detail_table_cells[6]
+        distance_strikes_landed_texts = distance_strikes_landed_cell.select('p.b-fight-details__table-text')
+        if len(distance_strikes_landed_texts) >= 2:
+            result['red_distance_strikes_landed'] = distance_strikes_landed_texts[0].get_text(strip=True).split(' ')[0]
+            result['blue_distance_strikes_landed'] = distance_strikes_landed_texts[1].get_text(strip=True).split(' ')[0]
+
+            result['red_distance_strikes_thrown'] = distance_strikes_landed_texts[0].get_text(strip=True).split(' ')[-1]
+            result['blue_distance_strikes_thrown'] = distance_strikes_landed_texts[1].get_text(strip=True).split(' ')[-1]
+
+        # extract clinch strikes landed (eighth column)
+        clinch_strikes_landed_cell = strike_detail_table_cells[7]
+        clinch_strikes_landed_texts = clinch_strikes_landed_cell.select('p.b-fight-details__table-text')
+        if len(clinch_strikes_landed_texts) >= 2:
+            result['red_clinch_strikes_landed'] = clinch_strikes_landed_texts[0].get_text(strip=True).split(' ')[0]
+            result['blue_clinch_strikes_landed'] = clinch_strikes_landed_texts[1].get_text(strip=True).split(' ')[0]
+
+            result['red_clinch_strikes_thrown'] = clinch_strikes_landed_texts[0].get_text(strip=True).split(' ')[-1]
+            result['blue_clinch_strikes_thrown'] = clinch_strikes_landed_texts[1].get_text(strip=True).split(' ')[-1]
+
+        # extract ground strikes landed (ninth column)
+        ground_strikes_landed_cell = strike_detail_table_cells[8]
+        ground_strikes_landed_texts = ground_strikes_landed_cell.select('p.b-fight-details__table-text')
+        if len(ground_strikes_landed_texts) >= 2:
+            result['red_ground_strikes_landed'] = ground_strikes_landed_texts[0].get_text(strip=True).split(' ')[0]
+            result['blue_ground_strikes_landed'] = ground_strikes_landed_texts[1].get_text(strip=True).split(' ')[0]
+
+            result['red_ground_strikes_thrown'] = ground_strikes_landed_texts[0].get_text(strip=True).split(' ')[-1]
+            result['blue_ground_strikes_thrown'] = ground_strikes_landed_texts[1].get_text(strip=True).split(' ')[-1]
 
     except Exception as e:
         LOGGER.error(f"Error extracting fight stats: {e}")
