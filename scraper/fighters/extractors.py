@@ -10,8 +10,9 @@ from .utils import (
     convert_reach_to_cm,
     parse_date_of_birth,
     clean_string,
-    safe_int_convert
 )
+
+from scraper.utils import safe_int_convert
 
 logger = logging.getLogger(__name__)
 
