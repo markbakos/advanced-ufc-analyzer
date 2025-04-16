@@ -305,7 +305,7 @@ def extract_total_stats(soup: BeautifulSoup, rounds: int) -> Dict[str, Any]:
             'blue_control_time_rd5': None,
     }
     
-    for round in range(0, rounds):
+    for round in range(0, rounds+1):
         try:
             stats_tables = soup.select('table tbody.b-fight-details__table-body tr.b-fight-details__table-row')
             if not stats_tables or len(stats_tables) < 2:
