@@ -648,5 +648,4 @@ def extract_strike_data(soup: BeautifulSoup, rounds: int) -> Dict[str, Any]:
             LOGGER.error(f"Error extracting fight stats: {e}")
             return result
 
-    LOGGER.info(f"Extracted strike data: {result}")
     return result
