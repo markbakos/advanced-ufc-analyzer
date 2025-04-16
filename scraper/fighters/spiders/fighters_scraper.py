@@ -18,7 +18,7 @@ from scraper.fighters.extractors import (
 LOGGER = logging.getLogger(__name__)
 
 # FOR TESTING, ONLY ONE LETTER
-TEST_RUN = True
+TEST_RUN = False
 
 class UFCStatsSpider:
     """

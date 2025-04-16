@@ -433,88 +433,220 @@ def extract_strike_data(soup: BeautifulSoup, rounds: int) -> Dict[str, Any]:
             'blue_clinch_strikes_thrown': None,
             'blue_ground_strikes_landed': None,
             'blue_ground_strikes_thrown': None,
-    }
-    
-    try:
-        stats_tables = soup.select('table tbody.b-fight-details__table-body tr.b-fight-details__table-row')
-        if not stats_tables or len(stats_tables) < 2:
-            LOGGER.warning(f"Could not find stats table on page")
-            return result
 
-        # extract strike detail table
-        total_strike_detail_table = stats_tables[1+rounds]
-        if not total_strike_detail_table:
-            LOGGER.warning(f"Could not find strike detail table on page")
-            return result
-
-        # extract all table cells
-        strike_detail_table_cells = total_strike_detail_table.select('td.b-fight-details__table-col')
-        if len(strike_detail_table_cells) < 9:
-            LOGGER.warning(f"Could not find all required table cells on page")
-            return result
-
-        # extract head strikes landed (fourth column)
-        head_strikes_landed_cell = strike_detail_table_cells[3]
-        head_strikes_landed_texts = head_strikes_landed_cell.select('p.b-fight-details__table-text')
-        if len(head_strikes_landed_texts) >= 2:
-            result['red_head_strikes_landed'] = safe_int_convert(head_strikes_landed_texts[0].get_text(strip=True).split(' ')[0])
-            result['blue_head_strikes_landed'] = safe_int_convert(head_strikes_landed_texts[1].get_text(strip=True).split(' ')[0])
-
-            result['red_head_strikes_thrown'] = safe_int_convert(head_strikes_landed_texts[0].get_text(strip=True).split(' ')[-1])
-            result['blue_head_strikes_thrown'] = safe_int_convert(head_strikes_landed_texts[1].get_text(strip=True).split(' ')[-1])
+            'red_head_strikes_landed_rd1': None,
+            'red_head_strikes_thrown_rd1': None,
+            'red_body_strikes_landed_rd1': None,
+            'red_body_strikes_thrown_rd1': None,
+            'red_leg_strikes_landed_rd1': None,
+            'red_leg_strikes_thrown_rd1': None,
+            'red_distance_strikes_landed_rd1': None,
+            'red_distance_strikes_thrown_rd1': None,
+            'red_clinch_strikes_landed_rd1': None,
+            'red_clinch_strikes_thrown_rd1': None,
+            'red_ground_strikes_landed_rd1': None,
+            'red_ground_strikes_thrown_rd1': None,
             
-        # extract body strikes landed (fifth column)
-        body_strikes_landed_cell = strike_detail_table_cells[4]
-        body_strikes_landed_texts = body_strikes_landed_cell.select('p.b-fight-details__table-text')
-        if len(body_strikes_landed_texts) >= 2:
-            result['red_body_strikes_landed'] = safe_int_convert(body_strikes_landed_texts[0].get_text(strip=True).split(' ')[0])
-            result['blue_body_strikes_landed'] = safe_int_convert(body_strikes_landed_texts[1].get_text(strip=True).split(' ')[0])
+            'red_head_strikes_landed_rd2': None,
+            'red_head_strikes_thrown_rd2': None,
+            'red_body_strikes_landed_rd2': None,
+            'red_body_strikes_thrown_rd2': None,
+            'red_leg_strikes_landed_rd2': None,
+            'red_leg_strikes_thrown_rd2': None,
+            'red_distance_strikes_landed_rd2': None,
+            'red_distance_strikes_thrown_rd2': None,
+            'red_clinch_strikes_landed_rd2': None,
+            'red_clinch_strikes_thrown_rd2': None,
+            'red_ground_strikes_landed_rd2': None,
+            'red_ground_strikes_thrown_rd2': None,
+            
+            'red_head_strikes_landed_rd3': None,
+            'red_head_strikes_thrown_rd3': None,
+            'red_body_strikes_landed_rd3': None,
+            'red_body_strikes_thrown_rd3': None,
+            'red_leg_strikes_landed_rd3': None,
+            'red_leg_strikes_thrown_rd3': None,
+            'red_distance_strikes_landed_rd3': None,
+            'red_distance_strikes_thrown_rd3': None,
+            'red_clinch_strikes_landed_rd3': None,
+            'red_clinch_strikes_thrown_rd3': None,
+            'red_ground_strikes_landed_rd3': None,
+            'red_ground_strikes_thrown_rd3': None,
+            
+            'red_head_strikes_landed_rd4': None,
+            'red_head_strikes_thrown_rd4': None,
+            'red_body_strikes_landed_rd4': None,
+            'red_body_strikes_thrown_rd4': None,
+            'red_leg_strikes_landed_rd4': None,
+            'red_leg_strikes_thrown_rd4': None,
+            'red_distance_strikes_landed_rd4': None,
+            'red_distance_strikes_thrown_rd4': None,
+            'red_clinch_strikes_landed_rd4': None,
+            'red_clinch_strikes_thrown_rd4': None,
+            'red_ground_strikes_landed_rd4': None,
+            'red_ground_strikes_thrown_rd4': None,
+            
+            'red_head_strikes_landed_rd5': None,
+            'red_head_strikes_thrown_rd5': None,
+            'red_body_strikes_landed_rd5': None,
+            'red_body_strikes_thrown_rd5': None,
+            'red_leg_strikes_landed_rd5': None,
+            'red_leg_strikes_thrown_rd5': None,
+            'red_distance_strikes_landed_rd5': None,
+            'red_distance_strikes_thrown_rd5': None,
+            'red_clinch_strikes_landed_rd5': None,
+            'red_clinch_strikes_thrown_rd5': None,
+            'red_ground_strikes_landed_rd5': None,
+            'red_ground_strikes_thrown_rd5': None,
+            
+            'blue_head_strikes_landed_rd1': None,
+            'blue_head_strikes_thrown_rd1': None,
+            'blue_body_strikes_landed_rd1': None,
+            'blue_body_strikes_thrown_rd1': None,
+            'blue_leg_strikes_landed_rd1': None,
+            'blue_leg_strikes_thrown_rd1': None,
+            'blue_distance_strikes_landed_rd1': None,
+            'blue_distance_strikes_thrown_rd1': None,
+            'blue_clinch_strikes_landed_rd1': None,
+            'blue_clinch_strikes_thrown_rd1': None,
+            'blue_ground_strikes_landed_rd1': None,
+            'blue_ground_strikes_thrown_rd1': None,
+            
+            'blue_head_strikes_landed_rd2': None,
+            'blue_head_strikes_thrown_rd2': None,
+            'blue_body_strikes_landed_rd2': None,
+            'blue_body_strikes_thrown_rd2': None,
+            'blue_leg_strikes_landed_rd2': None,
+            'blue_leg_strikes_thrown_rd2': None,
+            'blue_distance_strikes_landed_rd2': None,
+            'blue_distance_strikes_thrown_rd2': None,
+            'blue_clinch_strikes_landed_rd2': None,
+            'blue_clinch_strikes_thrown_rd2': None,
+            'blue_ground_strikes_landed_rd2': None,
+            'blue_ground_strikes_thrown_rd2': None,
+            
+            'blue_head_strikes_landed_rd3': None,
+            'blue_head_strikes_thrown_rd3': None,
+            'blue_body_strikes_landed_rd3': None,
+            'blue_body_strikes_thrown_rd3': None,
+            'blue_leg_strikes_landed_rd3': None,
+            'blue_leg_strikes_thrown_rd3': None,
+            'blue_distance_strikes_landed_rd3': None,
+            'blue_distance_strikes_thrown_rd3': None,
+            'blue_clinch_strikes_landed_rd3': None,
+            'blue_clinch_strikes_thrown_rd3': None,
+            'blue_ground_strikes_landed_rd3': None,
+            'blue_ground_strikes_thrown_rd3': None,
+            
+            'blue_head_strikes_landed_rd4': None,
+            'blue_head_strikes_thrown_rd4': None,
+            'blue_body_strikes_landed_rd4': None,
+            'blue_body_strikes_thrown_rd4': None,
+            'blue_leg_strikes_landed_rd4': None,
+            'blue_leg_strikes_thrown_rd4': None,
+            'blue_distance_strikes_landed_rd4': None,
+            'blue_distance_strikes_thrown_rd4': None,
+            'blue_clinch_strikes_landed_rd4': None,
+            'blue_clinch_strikes_thrown_rd4': None,
+            'blue_ground_strikes_landed_rd4': None,
+            'blue_ground_strikes_thrown_rd4': None,
 
-            result['red_body_strikes_thrown'] = safe_int_convert(body_strikes_landed_texts[0].get_text(strip=True).split(' ')[-1])
-            result['blue_body_strikes_thrown'] = safe_int_convert(body_strikes_landed_texts[1].get_text(strip=True).split(' ')[-1])
-        
-        # extract leg strikes landed (sixth column)
-        leg_strikes_landed_cell = strike_detail_table_cells[5]
-        leg_strikes_landed_texts = leg_strikes_landed_cell.select('p.b-fight-details__table-text')
-        if len(leg_strikes_landed_texts) >= 2:
-            result['red_leg_strikes_landed'] = safe_int_convert(leg_strikes_landed_texts[0].get_text(strip=True).split(' ')[0])
-            result['blue_leg_strikes_landed'] = safe_int_convert(leg_strikes_landed_texts[1].get_text(strip=True).split(' ')[0])
+            'blue_head_strikes_landed_rd5': None,
+            'blue_head_strikes_thrown_rd5': None,
+            'blue_body_strikes_landed_rd5': None,
+            'blue_body_strikes_thrown_rd5': None,
+            'blue_leg_strikes_landed_rd5': None,
+            'blue_leg_strikes_thrown_rd5': None,
+            'blue_distance_strikes_landed_rd5': None,
+            'blue_distance_strikes_thrown_rd5': None,
+            'blue_clinch_strikes_landed_rd5': None,
+            'blue_clinch_strikes_thrown_rd5': None,
+            'blue_ground_strikes_landed_rd5': None,
+            'blue_ground_strikes_thrown_rd5': None,
+            }
 
-            result['red_leg_strikes_thrown'] = safe_int_convert(leg_strikes_landed_texts[0].get_text(strip=True).split(' ')[-1])
-            result['blue_leg_strikes_thrown'] = safe_int_convert(leg_strikes_landed_texts[1].get_text(strip=True).split(' ')[-1])
-        
-        # extract distance strikes landed (seventh column)
-        distance_strikes_landed_cell = strike_detail_table_cells[6]
-        distance_strikes_landed_texts = distance_strikes_landed_cell.select('p.b-fight-details__table-text')
-        if len(distance_strikes_landed_texts) >= 2:
-            result['red_distance_strikes_landed'] = safe_int_convert(distance_strikes_landed_texts[0].get_text(strip=True).split(' ')[0])
-            result['blue_distance_strikes_landed'] = safe_int_convert(distance_strikes_landed_texts[1].get_text(strip=True).split(' ')[0])
+    for round in range(rounds+1, rounds+rounds+1, 1):
+        try:
+            stats_tables = soup.select('table tbody.b-fight-details__table-body tr.b-fight-details__table-row')
+            if not stats_tables or len(stats_tables) < 2:
+                LOGGER.warning(f"Could not find stats table on page")
+                return result
 
-            result['red_distance_strikes_thrown'] = safe_int_convert(distance_strikes_landed_texts[0].get_text(strip=True).split(' ')[-1])
-            result['blue_distance_strikes_thrown'] = safe_int_convert(distance_strikes_landed_texts[1].get_text(strip=True).split(' ')[-1])
+            # extract strike detail table
+            total_strike_detail_table = stats_tables[round]
+            if not total_strike_detail_table:
+                LOGGER.warning(f"Could not find strike detail table on page")
+                return result
 
-        # extract clinch strikes landed (eighth column)
-        clinch_strikes_landed_cell = strike_detail_table_cells[7]
-        clinch_strikes_landed_texts = clinch_strikes_landed_cell.select('p.b-fight-details__table-text')
-        if len(clinch_strikes_landed_texts) >= 2:
-            result['red_clinch_strikes_landed'] = safe_int_convert(clinch_strikes_landed_texts[0].get_text(strip=True).split(' ')[0])
-            result['blue_clinch_strikes_landed'] = safe_int_convert(clinch_strikes_landed_texts[1].get_text(strip=True).split(' ')[0])
+            # extract all table cells
+            strike_detail_table_cells = total_strike_detail_table.select('td.b-fight-details__table-col')
+            if len(strike_detail_table_cells) < 9:
+                LOGGER.warning(f"Could not find all required table cells on page")
+                return result
 
-            result['red_clinch_strikes_thrown'] = safe_int_convert(clinch_strikes_landed_texts[0].get_text(strip=True).split(' ')[-1])
-            result['blue_clinch_strikes_thrown'] = safe_int_convert(clinch_strikes_landed_texts[1].get_text(strip=True).split(' ')[-1])
+            # extract head strikes landed (fourth column)
+            head_strikes_landed_cell = strike_detail_table_cells[3]
+            head_strikes_landed_texts = head_strikes_landed_cell.select('p.b-fight-details__table-text')
+            if len(head_strikes_landed_texts) >= 2:
+                result['red_head_strikes_landed_rd' + str(round-rounds-1) if round != rounds+1 else 'red_head_strikes_landed'] = safe_int_convert(head_strikes_landed_texts[0].get_text(strip=True).split(' ')[0])
+                result['blue_head_strikes_landed_rd' + str(round-rounds-1) if round != rounds+1 else 'blue_head_strikes_landed'] = safe_int_convert(head_strikes_landed_texts[1].get_text(strip=True).split(' ')[0])
 
-        # extract ground strikes landed (ninth column)
-        ground_strikes_landed_cell = strike_detail_table_cells[8]
-        ground_strikes_landed_texts = ground_strikes_landed_cell.select('p.b-fight-details__table-text')
-        if len(ground_strikes_landed_texts) >= 2:
-            result['red_ground_strikes_landed'] = safe_int_convert(ground_strikes_landed_texts[0].get_text(strip=True).split(' ')[0])
-            result['blue_ground_strikes_landed'] = safe_int_convert(ground_strikes_landed_texts[1].get_text(strip=True).split(' ')[0])
+                result['red_head_strikes_thrown_rd' + str(round-rounds-1) if round != rounds+1 else 'red_head_strikes_thrown'] = safe_int_convert(head_strikes_landed_texts[0].get_text(strip=True).split(' ')[-1])
+                result['blue_head_strikes_thrown_rd' + str(round-rounds-1) if round != rounds+1 else 'blue_head_strikes_thrown'] = safe_int_convert(head_strikes_landed_texts[1].get_text(strip=True).split(' ')[-1])
+                
+            # extract body strikes landed (fifth column)
+            body_strikes_landed_cell = strike_detail_table_cells[4]
+            body_strikes_landed_texts = body_strikes_landed_cell.select('p.b-fight-details__table-text')
+            if len(body_strikes_landed_texts) >= 2:
+                result['red_body_strikes_landed_rd' + str(round-rounds-1) if round != rounds+1 else 'red_body_strikes_landed'] = safe_int_convert(body_strikes_landed_texts[0].get_text(strip=True).split(' ')[0])
+                result['blue_body_strikes_landed_rd' + str(round-rounds-1) if round != rounds+1 else 'blue_body_strikes_landed'] = safe_int_convert(body_strikes_landed_texts[1].get_text(strip=True).split(' ')[0])
 
-            result['red_ground_strikes_thrown'] = safe_int_convert(ground_strikes_landed_texts[0].get_text(strip=True).split(' ')[-1])
-            result['blue_ground_strikes_thrown'] = safe_int_convert(ground_strikes_landed_texts[1].get_text(strip=True).split(' ')[-1])
+                result['red_body_strikes_thrown_rd' + str(round-rounds-1) if round != rounds+1 else 'red_body_strikes_thrown'] = safe_int_convert(body_strikes_landed_texts[0].get_text(strip=True).split(' ')[-1])
+                result['blue_body_strikes_thrown_rd' + str(round-rounds-1) if round != rounds+1 else 'blue_body_strikes_thrown'] = safe_int_convert(body_strikes_landed_texts[1].get_text(strip=True).split(' ')[-1])
+            
+            # extract leg strikes landed (sixth column)
+            leg_strikes_landed_cell = strike_detail_table_cells[5]
+            leg_strikes_landed_texts = leg_strikes_landed_cell.select('p.b-fight-details__table-text')
+            if len(leg_strikes_landed_texts) >= 2:
+                result['red_leg_strikes_landed_rd' + str(round-rounds-1) if round != rounds+1 else 'red_leg_strikes_landed'] = safe_int_convert(leg_strikes_landed_texts[0].get_text(strip=True).split(' ')[0])
+                result['blue_leg_strikes_landed_rd' + str(round-rounds-1) if round != rounds+1 else 'blue_leg_strikes_landed'] = safe_int_convert(leg_strikes_landed_texts[1].get_text(strip=True).split(' ')[0])
 
-    except Exception as e:
-        LOGGER.error(f"Error extracting fight stats: {e}")
-        return result
+                result['red_leg_strikes_thrown_rd' + str(round-rounds-1) if round != rounds+1 else 'red_leg_strikes_thrown'] = safe_int_convert(leg_strikes_landed_texts[0].get_text(strip=True).split(' ')[-1])
+                result['blue_leg_strikes_thrown_rd' + str(round-rounds-1) if round != rounds+1 else 'blue_leg_strikes_thrown'] = safe_int_convert(leg_strikes_landed_texts[1].get_text(strip=True).split(' ')[-1])
+            
+            # extract distance strikes landed (seventh column)
+            distance_strikes_landed_cell = strike_detail_table_cells[6]
+            distance_strikes_landed_texts = distance_strikes_landed_cell.select('p.b-fight-details__table-text')
+            if len(distance_strikes_landed_texts) >= 2:
+                result['red_distance_strikes_landed_rd' + str(round-rounds-1) if round != rounds+1 else 'red_distance_strikes_landed'] = safe_int_convert(distance_strikes_landed_texts[0].get_text(strip=True).split(' ')[0])
+                result['blue_distance_strikes_landed_rd' + str(round-rounds-1) if round != rounds+1 else 'blue_distance_strikes_landed'] = safe_int_convert(distance_strikes_landed_texts[1].get_text(strip=True).split(' ')[0])
 
+                result['red_distance_strikes_thrown_rd' + str(round-rounds-1) if round != rounds+1 else 'red_distance_strikes_thrown'] = safe_int_convert(distance_strikes_landed_texts[0].get_text(strip=True).split(' ')[-1])
+                result['blue_distance_strikes_thrown_rd' + str(round-rounds-1) if round != rounds+1 else 'blue_distance_strikes_thrown'] = safe_int_convert(distance_strikes_landed_texts[1].get_text(strip=True).split(' ')[-1])
+
+            # extract clinch strikes landed (eighth column)
+            clinch_strikes_landed_cell = strike_detail_table_cells[7]
+            clinch_strikes_landed_texts = clinch_strikes_landed_cell.select('p.b-fight-details__table-text')
+            if len(clinch_strikes_landed_texts) >= 2:
+                result['red_clinch_strikes_landed_rd' + str(round-rounds-1) if round != rounds+1 else 'red_clinch_strikes_landed'] = safe_int_convert(clinch_strikes_landed_texts[0].get_text(strip=True).split(' ')[0])
+                result['blue_clinch_strikes_landed_rd' + str(round-rounds-1) if round != rounds+1 else 'blue_clinch_strikes_landed'] = safe_int_convert(clinch_strikes_landed_texts[1].get_text(strip=True).split(' ')[0])
+
+                result['red_clinch_strikes_thrown_rd' + str(round-rounds-1) if round != rounds+1 else 'red_clinch_strikes_thrown'] = safe_int_convert(clinch_strikes_landed_texts[0].get_text(strip=True).split(' ')[-1])
+                result['blue_clinch_strikes_thrown_rd' + str(round-rounds-1) if round != rounds+1 else 'blue_clinch_strikes_thrown'] = safe_int_convert(clinch_strikes_landed_texts[1].get_text(strip=True).split(' ')[-1])
+
+            # extract ground strikes landed (ninth column)
+            ground_strikes_landed_cell = strike_detail_table_cells[8]
+            ground_strikes_landed_texts = ground_strikes_landed_cell.select('p.b-fight-details__table-text')
+            if len(ground_strikes_landed_texts) >= 2:
+                result['red_ground_strikes_landed_rd' + str(round-rounds-1) if round != rounds+1 else 'red_ground_strikes_landed'] = safe_int_convert(ground_strikes_landed_texts[0].get_text(strip=True).split(' ')[0])
+                result['blue_ground_strikes_landed_rd' + str(round-rounds-1) if round != rounds+1 else 'blue_ground_strikes_landed'] = safe_int_convert(ground_strikes_landed_texts[1].get_text(strip=True).split(' ')[0])
+
+                result['red_ground_strikes_thrown_rd' + str(round-rounds-1) if round != rounds+1 else 'red_ground_strikes_thrown'] = safe_int_convert(ground_strikes_landed_texts[0].get_text(strip=True).split(' ')[-1])
+                result['blue_ground_strikes_thrown_rd' + str(round-rounds-1) if round != rounds+1 else 'blue_ground_strikes_thrown'] = safe_int_convert(ground_strikes_landed_texts[1].get_text(strip=True).split(' ')[-1])
+
+        except Exception as e:
+            LOGGER.error(f"Error extracting fight stats: {e}")
+            return result
+
+    LOGGER.info(f"Extracted strike data: {result}")
     return result
