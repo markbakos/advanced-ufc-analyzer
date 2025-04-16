@@ -1,6 +1,7 @@
 import logging
 from typing import Dict, Any
 from bs4 import BeautifulSoup
+from scraper.utils import safe_int_convert, safe_float_convert
 
 LOGGER = logging.getLogger(__name__)
 
@@ -111,7 +112,7 @@ def extract_fight_data(soup: BeautifulSoup) -> Dict[str, Any]:
         round_item = fight_details_text.select_one('i.b-fight-details__text-item:has(i.b-fight-details__label:-soup-contains("Round:"))')
         if round_item:
             round_text = round_item.get_text(strip=True).replace('Round:', '').strip()
-            result['round'] = round_text
+            result['round'] = safe_int_convert(round_text)
         
         # extract time
         time_item = fight_details_text.select_one('i.b-fight-details__text-item:has(i.b-fight-details__label:-soup-contains("Time:"))')
@@ -122,8 +123,8 @@ def extract_fight_data(soup: BeautifulSoup) -> Dict[str, Any]:
         # extract time format
         time_format_item = fight_details_text.select_one('i.b-fight-details__text-item:has(i.b-fight-details__label:-soup-contains("Time format:"))')
         if time_format_item:
-            time_format_text = time_format_item.get_text(strip=True).replace('Time format:', '').strip()
-            result['total_rounds'] = time_format_text.split(' ')[0]
+            time_format_text = time_format_item.get_text(strip=True).replace('Time format:', '').strip().split(' ')[0]
+            result['total_rounds'] = safe_int_convert(time_format_text)
         
         # extract referee
         referee_item = fight_details_text.select_one('i.b-fight-details__text-item:has(i.b-fight-details__label:-soup-contains("Referee:"))')
@@ -218,66 +219,66 @@ def extract_fight_stats(soup: BeautifulSoup, rounds: int) -> Dict[str, Any]:
         knockdowns_cell = table_cells[1]
         knockdowns_texts = knockdowns_cell.select('p.b-fight-details__table-text')
         if len(knockdowns_texts) >= 2:
-            result['red_knockdowns_landed'] = knockdowns_texts[0].get_text(strip=True)
-            result['blue_knockdowns_landed'] = knockdowns_texts[1].get_text(strip=True)
+            result['red_knockdowns_landed'] = safe_int_convert(knockdowns_texts[0].get_text(strip=True))
+            result['blue_knockdowns_landed'] = safe_int_convert(knockdowns_texts[1].get_text(strip=True))
 
         # extract significant strikes landed (third column)
         sig_strikes_cell = table_cells[2]
         sig_strikes_texts = sig_strikes_cell.select('p.b-fight-details__table-text')
         if len(sig_strikes_texts) >= 2:
-            result['red_sig_strikes_landed'] = sig_strikes_texts[0].get_text(strip=True).split(' ')[0]
-            result['blue_sig_strikes_landed'] = sig_strikes_texts[1].get_text(strip=True).split(' ')[0]
+            result['red_sig_strikes_landed'] = safe_int_convert(sig_strikes_texts[0].get_text(strip=True).split(' ')[0])
+            result['blue_sig_strikes_landed'] = safe_int_convert(sig_strikes_texts[1].get_text(strip=True).split(' ')[0])
 
-            result['red_sig_strikes_thrown'] = sig_strikes_texts[0].get_text(strip=True).split(' ')[-1]
-            result['blue_sig_strikes_thrown'] = sig_strikes_texts[1].get_text(strip=True).split(' ')[-1]
+            result['red_sig_strikes_thrown'] = safe_int_convert(sig_strikes_texts[0].get_text(strip=True).split(' ')[-1])
+            result['blue_sig_strikes_thrown'] = safe_int_convert(sig_strikes_texts[1].get_text(strip=True).split(' ')[-1])
 
         # extract significant strike percentage (fourth column)
         sig_strike_percent_cell = table_cells[3]
         sig_strike_percent_texts = sig_strike_percent_cell.select('p.b-fight-details__table-text')
         if len(sig_strike_percent_texts) >= 2:
-            result['red_sig_strike_percent'] = sig_strike_percent_texts[0].get_text(strip=True).replace('%', '')
-            result['blue_sig_strike_percent'] = sig_strike_percent_texts[1].get_text(strip=True).replace('%', '')
+            result['red_sig_strike_percent'] = safe_float_convert(sig_strike_percent_texts[0].get_text(strip=True).replace('%', ''))
+            result['blue_sig_strike_percent'] = safe_float_convert(sig_strike_percent_texts[1].get_text(strip=True).replace('%', ''))
 
         # extract total strikes (fifth column)
         total_strikes_cell = table_cells[4]
         total_strikes_texts = total_strikes_cell.select('p.b-fight-details__table-text')
         if len(total_strikes_texts) >= 2:
-            result['red_total_strikes_landed'] = total_strikes_texts[0].get_text(strip=True).split(' ')[0]
-            result['blue_total_strikes_landed'] = total_strikes_texts[1].get_text(strip=True).split(' ')[0]
+            result['red_total_strikes_landed'] = safe_int_convert(total_strikes_texts[0].get_text(strip=True).split(' ')[0])
+            result['blue_total_strikes_landed'] = safe_int_convert(total_strikes_texts[1].get_text(strip=True).split(' ')[0])
 
-            result['red_total_strikes_thrown'] = total_strikes_texts[0].get_text(strip=True).split(' ')[-1]
-            result['blue_total_strikes_thrown'] = total_strikes_texts[1].get_text(strip=True).split(' ')[-1]
+            result['red_total_strikes_thrown'] = safe_int_convert(total_strikes_texts[0].get_text(strip=True).split(' ')[-1])
+            result['blue_total_strikes_thrown'] = safe_int_convert(total_strikes_texts[1].get_text(strip=True).split(' ')[-1])
 
         # extract takedowns landed (sixth column)
         takedowns_cell = table_cells[5]
         takedowns_texts = takedowns_cell.select('p.b-fight-details__table-text')
         if len(takedowns_texts) >= 2:
-            result['red_takedowns_landed'] = takedowns_texts[0].get_text(strip=True).split(' ')[0]
-            result['blue_takedowns_landed'] = takedowns_texts[1].get_text(strip=True).split(' ')[0]
+            result['red_takedowns_landed'] = safe_int_convert(takedowns_texts[0].get_text(strip=True).split(' ')[0])
+            result['blue_takedowns_landed'] = safe_int_convert(takedowns_texts[1].get_text(strip=True).split(' ')[0])
 
-            result['red_takedowns_attempted'] = takedowns_texts[0].get_text(strip=True).split(' ')[-1]
-            result['blue_takedowns_attempted'] = takedowns_texts[1].get_text(strip=True).split(' ')[-1]
+            result['red_takedowns_attempted'] = safe_int_convert(takedowns_texts[0].get_text(strip=True).split(' ')[-1])
+            result['blue_takedowns_attempted'] = safe_int_convert(takedowns_texts[1].get_text(strip=True).split(' ')[-1])
 
         # extract takedown percentage (seventh column)
         takedown_percent_cell = table_cells[6]
         takedown_percent_texts = takedown_percent_cell.select('p.b-fight-details__table-text')
         if len(takedown_percent_texts) >= 2:
-            result['red_takedowns_percent'] = takedown_percent_texts[0].get_text(strip=True).replace('%', '')
-            result['blue_takedowns_percent'] = takedown_percent_texts[1].get_text(strip=True).replace('%', '')
+            result['red_takedowns_percent'] = safe_float_convert(takedown_percent_texts[0].get_text(strip=True).replace('%', ''))
+            result['blue_takedowns_percent'] = safe_float_convert(takedown_percent_texts[1].get_text(strip=True).replace('%', ''))
 
         # extract submission attempts (eighth column)
         sub_attempts_cell = table_cells[7]
         sub_attempts_texts = sub_attempts_cell.select('p.b-fight-details__table-text')
         if len(sub_attempts_texts) >= 2:
-            result['red_sub_attempts'] = sub_attempts_texts[0].get_text(strip=True)
-            result['blue_sub_attempts'] = sub_attempts_texts[1].get_text(strip=True)
+            result['red_sub_attempts'] = safe_int_convert(sub_attempts_texts[0].get_text(strip=True))
+            result['blue_sub_attempts'] = safe_int_convert(sub_attempts_texts[1].get_text(strip=True))
 
         # extract reversals (ninth column)
         reversals_cell = table_cells[8]
         reversals_texts = reversals_cell.select('p.b-fight-details__table-text')
         if len(reversals_texts) >= 2:
-            result['red_reversals'] = reversals_texts[0].get_text(strip=True)
-            result['blue_reversals'] = reversals_texts[1].get_text(strip=True)
+            result['red_reversals'] = safe_int_convert(reversals_texts[0].get_text(strip=True))
+            result['blue_reversals'] = safe_int_convert(reversals_texts[1].get_text(strip=True))
 
         # extract control time (tenth column)
         control_time_cell = table_cells[9]
@@ -303,61 +304,61 @@ def extract_fight_stats(soup: BeautifulSoup, rounds: int) -> Dict[str, Any]:
         head_strikes_landed_cell = strike_detail_table_cells[3]
         head_strikes_landed_texts = head_strikes_landed_cell.select('p.b-fight-details__table-text')
         if len(head_strikes_landed_texts) >= 2:
-            result['red_head_strikes_landed'] = head_strikes_landed_texts[0].get_text(strip=True).split(' ')[0]
-            result['blue_head_strikes_landed'] = head_strikes_landed_texts[1].get_text(strip=True).split(' ')[0]
+            result['red_head_strikes_landed'] = safe_int_convert(head_strikes_landed_texts[0].get_text(strip=True).split(' ')[0])
+            result['blue_head_strikes_landed'] = safe_int_convert(head_strikes_landed_texts[1].get_text(strip=True).split(' ')[0])
 
-            result['red_head_strikes_thrown'] = head_strikes_landed_texts[0].get_text(strip=True).split(' ')[-1]
-            result['blue_head_strikes_thrown'] = head_strikes_landed_texts[1].get_text(strip=True).split(' ')[-1]
+            result['red_head_strikes_thrown'] = safe_int_convert(head_strikes_landed_texts[0].get_text(strip=True).split(' ')[-1])
+            result['blue_head_strikes_thrown'] = safe_int_convert(head_strikes_landed_texts[1].get_text(strip=True).split(' ')[-1])
             
         # extract body strikes landed (fifth column)
         body_strikes_landed_cell = strike_detail_table_cells[4]
         body_strikes_landed_texts = body_strikes_landed_cell.select('p.b-fight-details__table-text')
         if len(body_strikes_landed_texts) >= 2:
-            result['red_body_strikes_landed'] = body_strikes_landed_texts[0].get_text(strip=True).split(' ')[0]
-            result['blue_body_strikes_landed'] = body_strikes_landed_texts[1].get_text(strip=True).split(' ')[0]
+            result['red_body_strikes_landed'] = safe_int_convert(body_strikes_landed_texts[0].get_text(strip=True).split(' ')[0])
+            result['blue_body_strikes_landed'] = safe_int_convert(body_strikes_landed_texts[1].get_text(strip=True).split(' ')[0])
 
-            result['red_body_strikes_thrown'] = body_strikes_landed_texts[0].get_text(strip=True).split(' ')[-1]
-            result['blue_body_strikes_thrown'] = body_strikes_landed_texts[1].get_text(strip=True).split(' ')[-1]
+            result['red_body_strikes_thrown'] = safe_int_convert(body_strikes_landed_texts[0].get_text(strip=True).split(' ')[-1])
+            result['blue_body_strikes_thrown'] = safe_int_convert(body_strikes_landed_texts[1].get_text(strip=True).split(' ')[-1])
         
         # extract leg strikes landed (sixth column)
         leg_strikes_landed_cell = strike_detail_table_cells[5]
         leg_strikes_landed_texts = leg_strikes_landed_cell.select('p.b-fight-details__table-text')
         if len(leg_strikes_landed_texts) >= 2:
-            result['red_leg_strikes_landed'] = leg_strikes_landed_texts[0].get_text(strip=True).split(' ')[0]
-            result['blue_leg_strikes_landed'] = leg_strikes_landed_texts[1].get_text(strip=True).split(' ')[0]
+            result['red_leg_strikes_landed'] = safe_int_convert(leg_strikes_landed_texts[0].get_text(strip=True).split(' ')[0])
+            result['blue_leg_strikes_landed'] = safe_int_convert(leg_strikes_landed_texts[1].get_text(strip=True).split(' ')[0])
 
-            result['red_leg_strikes_thrown'] = leg_strikes_landed_texts[0].get_text(strip=True).split(' ')[-1]
-            result['blue_leg_strikes_thrown'] = leg_strikes_landed_texts[1].get_text(strip=True).split(' ')[-1]
+            result['red_leg_strikes_thrown'] = safe_int_convert(leg_strikes_landed_texts[0].get_text(strip=True).split(' ')[-1])
+            result['blue_leg_strikes_thrown'] = safe_int_convert(leg_strikes_landed_texts[1].get_text(strip=True).split(' ')[-1])
         
         # extract distance strikes landed (seventh column)
         distance_strikes_landed_cell = strike_detail_table_cells[6]
         distance_strikes_landed_texts = distance_strikes_landed_cell.select('p.b-fight-details__table-text')
         if len(distance_strikes_landed_texts) >= 2:
-            result['red_distance_strikes_landed'] = distance_strikes_landed_texts[0].get_text(strip=True).split(' ')[0]
-            result['blue_distance_strikes_landed'] = distance_strikes_landed_texts[1].get_text(strip=True).split(' ')[0]
+            result['red_distance_strikes_landed'] = safe_int_convert(distance_strikes_landed_texts[0].get_text(strip=True).split(' ')[0])
+            result['blue_distance_strikes_landed'] = safe_int_convert(distance_strikes_landed_texts[1].get_text(strip=True).split(' ')[0])
 
-            result['red_distance_strikes_thrown'] = distance_strikes_landed_texts[0].get_text(strip=True).split(' ')[-1]
-            result['blue_distance_strikes_thrown'] = distance_strikes_landed_texts[1].get_text(strip=True).split(' ')[-1]
+            result['red_distance_strikes_thrown'] = safe_int_convert(distance_strikes_landed_texts[0].get_text(strip=True).split(' ')[-1])
+            result['blue_distance_strikes_thrown'] = safe_int_convert(distance_strikes_landed_texts[1].get_text(strip=True).split(' ')[-1])
 
         # extract clinch strikes landed (eighth column)
         clinch_strikes_landed_cell = strike_detail_table_cells[7]
         clinch_strikes_landed_texts = clinch_strikes_landed_cell.select('p.b-fight-details__table-text')
         if len(clinch_strikes_landed_texts) >= 2:
-            result['red_clinch_strikes_landed'] = clinch_strikes_landed_texts[0].get_text(strip=True).split(' ')[0]
-            result['blue_clinch_strikes_landed'] = clinch_strikes_landed_texts[1].get_text(strip=True).split(' ')[0]
+            result['red_clinch_strikes_landed'] = safe_int_convert(clinch_strikes_landed_texts[0].get_text(strip=True).split(' ')[0])
+            result['blue_clinch_strikes_landed'] = safe_int_convert(clinch_strikes_landed_texts[1].get_text(strip=True).split(' ')[0])
 
-            result['red_clinch_strikes_thrown'] = clinch_strikes_landed_texts[0].get_text(strip=True).split(' ')[-1]
-            result['blue_clinch_strikes_thrown'] = clinch_strikes_landed_texts[1].get_text(strip=True).split(' ')[-1]
+            result['red_clinch_strikes_thrown'] = safe_int_convert(clinch_strikes_landed_texts[0].get_text(strip=True).split(' ')[-1])
+            result['blue_clinch_strikes_thrown'] = safe_int_convert(clinch_strikes_landed_texts[1].get_text(strip=True).split(' ')[-1])
 
         # extract ground strikes landed (ninth column)
         ground_strikes_landed_cell = strike_detail_table_cells[8]
         ground_strikes_landed_texts = ground_strikes_landed_cell.select('p.b-fight-details__table-text')
         if len(ground_strikes_landed_texts) >= 2:
-            result['red_ground_strikes_landed'] = ground_strikes_landed_texts[0].get_text(strip=True).split(' ')[0]
-            result['blue_ground_strikes_landed'] = ground_strikes_landed_texts[1].get_text(strip=True).split(' ')[0]
+            result['red_ground_strikes_landed'] = safe_int_convert(ground_strikes_landed_texts[0].get_text(strip=True).split(' ')[0])
+            result['blue_ground_strikes_landed'] = safe_int_convert(ground_strikes_landed_texts[1].get_text(strip=True).split(' ')[0])
 
-            result['red_ground_strikes_thrown'] = ground_strikes_landed_texts[0].get_text(strip=True).split(' ')[-1]
-            result['blue_ground_strikes_thrown'] = ground_strikes_landed_texts[1].get_text(strip=True).split(' ')[-1]
+            result['red_ground_strikes_thrown'] = safe_int_convert(ground_strikes_landed_texts[0].get_text(strip=True).split(' ')[-1])
+            result['blue_ground_strikes_thrown'] = safe_int_convert(ground_strikes_landed_texts[1].get_text(strip=True).split(' ')[-1])
 
     except Exception as e:
         LOGGER.error(f"Error extracting fight stats: {e}")
