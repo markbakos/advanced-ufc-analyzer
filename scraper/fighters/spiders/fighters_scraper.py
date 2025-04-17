@@ -6,6 +6,8 @@ from bs4 import BeautifulSoup
 import time
 import datetime
 from typing import Set, Dict, Any, Optional
+import concurrent.futures
+import threading
 
 from scraper.fighters.extractors import (
     extract_physical_data,
@@ -19,6 +21,10 @@ LOGGER = logging.getLogger(__name__)
 
 # FOR TESTING, ONLY ONE LETTER
 TEST_RUN = False
+# max amount of workers
+MAX_WORKERS = 5
+# lock for thread-safe CSV writing
+csv_lock = threading.Lock()
 
 class UFCStatsSpider:
     """
@@ -41,6 +47,9 @@ class UFCStatsSpider:
         # declare variables for tracking extraction time avgs
         self.total_extraction_time = 0
         self.fighter_count = 0
+        # Thread-safe counter for processed fighters
+        self.processed_count = 0
+        self.processed_lock = threading.Lock()
 
         self._initialize_csv()
 
@@ -71,9 +80,18 @@ class UFCStatsSpider:
         all_fighter_links = self.collect_all_fighter_links()
         LOGGER.info(f"Found {len(all_fighter_links)} unique fighter links")
         
-        for fighter_url in all_fighter_links:
-            self.parse_fighter_stats(fighter_url)
-            time.sleep(1)
+        # use ThreadPoolExecutor for concurrent processing
+        with concurrent.futures.ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
+            # submit all fighter URLs to the executor
+            futures = {executor.submit(self.parse_fighter_stats, url): url for url in all_fighter_links}
+            
+            # process results as they complete
+            for future in concurrent.futures.as_completed(futures):
+                url = futures[future]
+                try:
+                    future.result()  # this will raise any error
+                except Exception as e:
+                    LOGGER.error(f"Error processing {url}: {e}")
 
     def fetch_page(self, url: str) -> Optional[str]:
         """
@@ -197,12 +215,13 @@ class UFCStatsSpider:
         Args:
             extraction_time: Time taken for the current extraction
         """
-        self.total_extraction_time += extraction_time
-        self.fighter_count += 1
-        
-        if self.fighter_count > 0:
-            average_time = self.total_extraction_time / self.fighter_count
-            LOGGER.info(f"Average extraction time across {self.fighter_count} fighters: {average_time:.2f} seconds")
+        with self.processed_lock:
+            self.total_extraction_time += extraction_time
+            self.fighter_count += 1
+            
+            if self.fighter_count > 0:
+                average_time = self.total_extraction_time / self.fighter_count
+                LOGGER.info(f"Average extraction time across {self.fighter_count} fighters: {average_time:.2f} seconds")
     
     
     def _save_fighter_data(self, fighter_id: str, fighter_name: Optional[str], 
@@ -221,94 +240,96 @@ class UFCStatsSpider:
             losses: Number of losses
             draws: Number of draws
         """
-        with open(self.output_file, 'a', newline='', encoding='utf-8') as csvfile:
-            writer = csv.writer(csvfile)
+        # use a lock to ensure thread-safe CSV writing
+        with csv_lock:
+            with open(self.output_file, 'a', newline='', encoding='utf-8') as csvfile:
+                writer = csv.writer(csvfile)
 
-            win_percentage = round((wins/(wins+losses+draws)), 2) if (wins+losses+draws) > 0 else 0
+                win_percentage = round((wins/(wins+losses+draws)), 2) if (wins+losses+draws) > 0 else 0
 
-            total_fights = fight_data.get('total_ufc_fights', 0)
+                total_fights = fight_data.get('total_ufc_fights', 0)
 
-            if total_fights > 0:
-                avg_knockdowns_landed = round(fight_data.get('knockdowns_landed', 0) / total_fights, 2)
-                avg_knockdowns_absorbed = round(fight_data.get('knockdowns_absorbed', 0) / total_fights, 2)
-                avg_strikes_landed = round(fight_data.get('strikes_landed', 0) / total_fights, 2)
-                avg_strikes_absorbed = round(fight_data.get('strikes_absorbed', 0) / total_fights, 2)
-                avg_takedowns_landed = round(fight_data.get('takedowns_landed', 0) / total_fights, 2)
-                avg_takedowns_absorbed = round(fight_data.get('takedowns_absorbed', 0) / total_fights, 2)
-                avg_submission_attempts_landed = round(fight_data.get('sub_attempts_landed', 0) / total_fights, 2)
-                avg_submission_attempts_absorbed = round(fight_data.get('sub_attempts_absorbed', 0) / total_fights, 2)
+                if total_fights > 0:
+                    avg_knockdowns_landed = round(fight_data.get('knockdowns_landed', 0) / total_fights, 2)
+                    avg_knockdowns_absorbed = round(fight_data.get('knockdowns_absorbed', 0) / total_fights, 2)
+                    avg_strikes_landed = round(fight_data.get('strikes_landed', 0) / total_fights, 2)
+                    avg_strikes_absorbed = round(fight_data.get('strikes_absorbed', 0) / total_fights, 2)
+                    avg_takedowns_landed = round(fight_data.get('takedowns_landed', 0) / total_fights, 2)
+                    avg_takedowns_absorbed = round(fight_data.get('takedowns_absorbed', 0) / total_fights, 2)
+                    avg_submission_attempts_landed = round(fight_data.get('sub_attempts_landed', 0) / total_fights, 2)
+                    avg_submission_attempts_absorbed = round(fight_data.get('sub_attempts_absorbed', 0) / total_fights, 2)
 
-                avg_fight_time_min = round(fight_data.get('total_time_minutes', 0) / total_fights, 2)
-            else:
-                avg_knockdowns_landed = 0
-                avg_knockdowns_absorbed = 0
-                avg_strikes_landed = 0
-                avg_strikes_absorbed = 0
-                avg_takedowns_landed = 0
-                avg_takedowns_absorbed = 0
-                avg_submission_attempts_landed = 0
-                avg_submission_attempts_absorbed = 0
-                avg_fight_time_min = 0
+                    avg_fight_time_min = round(fight_data.get('total_time_minutes', 0) / total_fights, 2)
+                else:
+                    avg_knockdowns_landed = 0
+                    avg_knockdowns_absorbed = 0
+                    avg_strikes_landed = 0
+                    avg_strikes_absorbed = 0
+                    avg_takedowns_landed = 0
+                    avg_takedowns_absorbed = 0
+                    avg_submission_attempts_landed = 0
+                    avg_submission_attempts_absorbed = 0
+                    avg_fight_time_min = 0
 
-            # prepare data
-            row = [
-                fighter_id,
-                fighter_name,
-                nickname,
-                physical_data.get('date_of_birth'),
-                physical_data.get('height_cm'),
-                physical_data.get('weight_kg'),
-                physical_data.get('reach_cm'),
-                physical_data.get('stance'),
-                '',  # fighter_style
-                wins,
-                losses,
-                draws,
-                win_percentage,
-                '', # momentum
-                career_data.get('SLpM'),
-                career_data.get('str_acc'),
-                career_data.get('SApM'),
-                career_data.get('str_def'),
-                career_data.get('td_avg'),
-                career_data.get('td_acc'),
-                career_data.get('td_def'),
-                career_data.get('sub_avg'),
-                fight_data.get('total_ufc_fights'),
-                fight_data.get('wins_in_ufc'),
-                fight_data.get('losses_in_ufc'),
-                fight_data.get('draws_in_ufc'),
-                fight_data.get('wins_by_dec'),
-                fight_data.get('losses_by_dec'),
-                fight_data.get('wins_by_sub'),
-                fight_data.get('losses_by_sub'),
-                fight_data.get('wins_by_ko'),
-                fight_data.get('losses_by_ko'),
-                fight_data.get('knockdowns_landed'),
-                fight_data.get('knockdowns_absorbed'),
-                fight_data.get('strikes_landed'),
-                fight_data.get('strikes_absorbed'),
-                fight_data.get('takedowns_landed'),
-                fight_data.get('takedowns_absorbed'),
-                fight_data.get('sub_attempts_landed'),
-                fight_data.get('sub_attempts_absorbed'),
-                fight_data.get('total_rounds'),
-                fight_data.get('total_time_minutes'),
-                fight_data.get('last_fight_date'),
-                fight_data.get('last_win_date'),
-                avg_knockdowns_landed,
-                avg_knockdowns_absorbed,
-                avg_strikes_landed,
-                avg_strikes_absorbed,
-                avg_takedowns_landed,
-                avg_takedowns_absorbed,
-                avg_submission_attempts_landed,
-                avg_submission_attempts_absorbed,
-                avg_fight_time_min,
-                datetime.datetime.now().isoformat()
-            ]
-            
-            writer.writerow(row)
+                # prepare data
+                row = [
+                    fighter_id,
+                    fighter_name,
+                    nickname,
+                    physical_data.get('date_of_birth'),
+                    physical_data.get('height_cm'),
+                    physical_data.get('weight_kg'),
+                    physical_data.get('reach_cm'),
+                    physical_data.get('stance'),
+                    '',  # fighter_style
+                    wins,
+                    losses,
+                    draws,
+                    win_percentage,
+                    '', # momentum
+                    career_data.get('SLpM'),
+                    career_data.get('str_acc'),
+                    career_data.get('SApM'),
+                    career_data.get('str_def'),
+                    career_data.get('td_avg'),
+                    career_data.get('td_acc'),
+                    career_data.get('td_def'),
+                    career_data.get('sub_avg'),
+                    fight_data.get('total_ufc_fights'),
+                    fight_data.get('wins_in_ufc'),
+                    fight_data.get('losses_in_ufc'),
+                    fight_data.get('draws_in_ufc'),
+                    fight_data.get('wins_by_dec'),
+                    fight_data.get('losses_by_dec'),
+                    fight_data.get('wins_by_sub'),
+                    fight_data.get('losses_by_sub'),
+                    fight_data.get('wins_by_ko'),
+                    fight_data.get('losses_by_ko'),
+                    fight_data.get('knockdowns_landed'),
+                    fight_data.get('knockdowns_absorbed'),
+                    fight_data.get('strikes_landed'),
+                    fight_data.get('strikes_absorbed'),
+                    fight_data.get('takedowns_landed'),
+                    fight_data.get('takedowns_absorbed'),
+                    fight_data.get('sub_attempts_landed'),
+                    fight_data.get('sub_attempts_absorbed'),
+                    fight_data.get('total_rounds'),
+                    fight_data.get('total_time_minutes'),
+                    fight_data.get('last_fight_date'),
+                    fight_data.get('last_win_date'),
+                    avg_knockdowns_landed,
+                    avg_knockdowns_absorbed,
+                    avg_strikes_landed,
+                    avg_strikes_absorbed,
+                    avg_takedowns_landed,
+                    avg_takedowns_absorbed,
+                    avg_submission_attempts_landed,
+                    avg_submission_attempts_absorbed,
+                    avg_fight_time_min,
+                    datetime.datetime.now().isoformat()
+                ]
+                
+                writer.writerow(row)
 
 
 if __name__ == "__main__":
