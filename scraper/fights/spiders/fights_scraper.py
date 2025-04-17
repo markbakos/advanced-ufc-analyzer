@@ -2,6 +2,7 @@ import requests
 import csv
 import logging
 import time
+import datetime
 from typing import Set, Optional, Dict, Any
 from bs4 import BeautifulSoup
 from scraper.fights.extractors import (
@@ -10,6 +11,8 @@ from scraper.fights.extractors import (
     extract_total_stats,
     extract_strike_data
 )
+
+from scraper.fighters.extractors import extract_fights
 
 LOGGER = logging.getLogger(__name__)
 
@@ -335,16 +338,73 @@ class UFCFightsSpider:
         fight_total_stats = extract_total_stats(soup, int(fight_data['round']))
         fight_strike_stats = extract_strike_data(soup, int(fight_data['round']))
 
-        self._save_fight_data(fight_id, event_data, fighters_data, fight_data, fight_total_stats, fight_strike_stats)
+        fight_date_limit = datetime.datetime.strptime(event_date, "%B %d, %Y")
+
+        red_soup = BeautifulSoup(self.fetch_page(f"http://ufcstats.com/fighter-details/{fighters_data['red_fighter_id']}"), 'html.parser')
+        blue_soup = BeautifulSoup(self.fetch_page(f"http://ufcstats.com/fighter-details/{fighters_data['blue_fighter_id']}"), 'html.parser')
+
+        red_fighter_snapshot = extract_fights(red_soup, fight_date_limit)
+        blue_fighter_snapshot = extract_fights(blue_soup, fight_date_limit)
+
+        self._save_fight_data(fight_id, event_data, fighters_data, fight_data, fight_total_stats, fight_strike_stats, red_fighter_snapshot, blue_fighter_snapshot)
 
     def _save_fight_data(self, fight_id: str, event_data: Dict[str, Any], fighters_data: Dict[str, Any], fight_data: Dict[str, Any],
-                         fight_total_stats: Dict[str, Any], fight_strike_stats: Dict[str, Any]) -> None:
+                         fight_total_stats: Dict[str, Any], fight_strike_stats: Dict[str, Any], red_fighter_snapshot: Dict[str, Any], blue_fighter_snapshot: Dict[str, Any]) -> None:
         """
         Saves the fight data to the CSV file
         """
         
         with open(self.output_file, 'a', newline='', encoding='utf-8') as csvfile:
             writer = csv.writer(csvfile)
+
+            red_total_fights = red_fighter_snapshot.get('total_ufc_fights', 0)
+
+            if red_total_fights > 0:
+                red_avg_knockdowns_landed = round(red_fighter_snapshot.get('knockdowns_landed', 0) / red_total_fights, 2)
+                red_avg_knockdowns_absorbed = round(red_fighter_snapshot.get('knockdowns_absorbed', 0) / red_total_fights, 2)
+                red_avg_strikes_landed = round(red_fighter_snapshot.get('strikes_landed', 0) / red_total_fights, 2)
+                red_avg_strikes_absorbed = round(red_fighter_snapshot.get('strikes_absorbed', 0) / red_total_fights, 2)
+                red_avg_takedowns_landed = round(red_fighter_snapshot.get('takedowns_landed', 0) / red_total_fights, 2)
+                red_avg_takedowns_absorbed = round(red_fighter_snapshot.get('takedowns_absorbed', 0) / red_total_fights, 2)
+                red_avg_submission_attempts_landed = round(red_fighter_snapshot.get('sub_attempts_landed', 0) / red_total_fights, 2)
+                red_avg_submission_attempts_absorbed = round(red_fighter_snapshot.get('sub_attempts_absorbed', 0) / red_total_fights, 2)
+
+                red_avg_fight_time_min = round(red_fighter_snapshot.get('total_time_minutes', 0) / red_total_fights, 2)
+            else:
+                red_avg_knockdowns_landed = 0
+                red_avg_knockdowns_absorbed = 0
+                red_avg_strikes_landed = 0
+                red_avg_strikes_absorbed = 0
+                red_avg_takedowns_landed = 0
+                red_avg_takedowns_absorbed = 0
+                red_avg_submission_attempts_landed = 0
+                red_avg_submission_attempts_absorbed = 0
+                red_avg_fight_time_min = 0
+                
+            blue_total_fights = blue_fighter_snapshot.get('total_ufc_fights', 0)
+
+            if blue_total_fights > 0:
+                blue_avg_knockdowns_landed = round(blue_fighter_snapshot.get('knockdowns_landed', 0) / blue_total_fights, 2)
+                blue_avg_knockdowns_absorbed = round(blue_fighter_snapshot.get('knockdowns_absorbed', 0) / blue_total_fights, 2)
+                blue_avg_strikes_landed = round(blue_fighter_snapshot.get('strikes_landed', 0) / blue_total_fights, 2)
+                blue_avg_strikes_absorbed = round(blue_fighter_snapshot.get('strikes_absorbed', 0) / blue_total_fights, 2)
+                blue_avg_takedowns_landed = round(blue_fighter_snapshot.get('takedowns_landed', 0) / blue_total_fights, 2)
+                blue_avg_takedowns_absorbed = round(blue_fighter_snapshot.get('takedowns_absorbed', 0) / blue_total_fights, 2)
+                blue_avg_submission_attempts_landed = round(blue_fighter_snapshot.get('sub_attempts_landed', 0) / blue_total_fights, 2)
+                blue_avg_submission_attempts_absorbed = round(blue_fighter_snapshot.get('sub_attempts_absorbed', 0) / blue_total_fights, 2)
+
+                blue_avg_fight_time_min = round(blue_fighter_snapshot.get('total_time_minutes', 0) / blue_total_fights, 2)
+            else:
+                blue_avg_knockdowns_landed = 0
+                blue_avg_knockdowns_absorbed = 0
+                blue_avg_strikes_landed = 0
+                blue_avg_strikes_absorbed = 0
+                blue_avg_takedowns_landed = 0
+                blue_avg_takedowns_absorbed = 0
+                blue_avg_submission_attempts_landed = 0
+                blue_avg_submission_attempts_absorbed = 0
+                blue_avg_fight_time_min = 0
+
             writer.writerow([
                 fight_id,
 
@@ -675,6 +735,71 @@ class UFCFightsSpider:
                 fight_strike_stats['blue_clinch_strikes_thrown_rd5'],
                 fight_strike_stats['blue_ground_strikes_landed_rd5'],
                 fight_strike_stats['blue_ground_strikes_thrown_rd5'],
+
+                red_fighter_snapshot['total_ufc_fights'],
+                red_fighter_snapshot['wins_in_ufc'],
+                red_fighter_snapshot['losses_in_ufc'],
+                red_fighter_snapshot['draws_in_ufc'],
+                red_fighter_snapshot['wins_by_dec'],
+                red_fighter_snapshot['losses_by_dec'],
+                red_fighter_snapshot['wins_by_sub'],
+                red_fighter_snapshot['losses_by_sub'],
+                red_fighter_snapshot['wins_by_ko'],
+                red_fighter_snapshot['losses_by_ko'],
+                red_fighter_snapshot['knockdowns_landed'],
+                red_fighter_snapshot['knockdowns_absorbed'],
+                red_fighter_snapshot['strikes_landed'],
+                red_fighter_snapshot['strikes_absorbed'],
+                red_fighter_snapshot['takedowns_landed'],
+                red_fighter_snapshot['takedowns_absorbed'],
+                red_fighter_snapshot['sub_attempts_landed'],
+                red_fighter_snapshot['sub_attempts_absorbed'],
+                red_fighter_snapshot['total_rounds'],
+                red_fighter_snapshot['total_time_minutes'],
+                red_fighter_snapshot['last_fight_date'],
+                red_fighter_snapshot['last_win_date'],
+                red_avg_knockdowns_landed,
+                red_avg_knockdowns_absorbed,
+                red_avg_strikes_landed,
+                red_avg_strikes_absorbed,
+                red_avg_takedowns_landed,
+                red_avg_takedowns_absorbed,
+                red_avg_submission_attempts_landed,
+                red_avg_submission_attempts_absorbed,
+                red_avg_fight_time_min,
+
+                blue_fighter_snapshot['total_ufc_fights'],
+                blue_fighter_snapshot['wins_in_ufc'],
+                blue_fighter_snapshot['losses_in_ufc'],
+                blue_fighter_snapshot['draws_in_ufc'],
+                blue_fighter_snapshot['wins_by_dec'],
+                blue_fighter_snapshot['losses_by_dec'],
+                blue_fighter_snapshot['wins_by_sub'],
+                blue_fighter_snapshot['losses_by_sub'],
+                blue_fighter_snapshot['wins_by_ko'],
+                blue_fighter_snapshot['losses_by_ko'],
+                blue_fighter_snapshot['knockdowns_landed'],
+                blue_fighter_snapshot['knockdowns_absorbed'],
+                blue_fighter_snapshot['strikes_landed'],
+                blue_fighter_snapshot['strikes_absorbed'],
+                blue_fighter_snapshot['takedowns_landed'],
+                blue_fighter_snapshot['takedowns_absorbed'],
+                blue_fighter_snapshot['sub_attempts_landed'],
+                blue_fighter_snapshot['sub_attempts_absorbed'],
+                blue_fighter_snapshot['total_rounds'],
+                blue_fighter_snapshot['total_time_minutes'],
+                blue_fighter_snapshot['last_fight_date'],
+                blue_fighter_snapshot['last_win_date'],
+                blue_avg_knockdowns_landed,
+                blue_avg_knockdowns_absorbed,
+                blue_avg_strikes_landed,
+                blue_avg_strikes_absorbed,
+                blue_avg_takedowns_landed,
+                blue_avg_takedowns_absorbed,
+                blue_avg_submission_attempts_landed,
+                blue_avg_submission_attempts_absorbed,
+                blue_avg_fight_time_min,
+                datetime.datetime.now().isoformat()
             ])
 
 if __name__ == '__main__':
