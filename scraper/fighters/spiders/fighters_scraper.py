@@ -37,6 +37,10 @@ class UFCStatsSpider:
         self.headers = {
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
         }
+        
+        # declare variables for tracking extraction time avgs
+        self.total_extraction_time = 0
+        self.fighter_count = 0
 
         self._initialize_csv()
 
@@ -99,6 +103,8 @@ class UFCStatsSpider:
         """
         all_links = set()
         
+        start_time = time.time()
+
         for letter in self.letters:
             LOGGER.info(f"Collecting fighters for letter: {letter}")
             url = f"{self.base_url}?char={letter}{'&page=all' if not TEST_RUN else ''}"
@@ -112,6 +118,10 @@ class UFCStatsSpider:
             
             if TEST_RUN:
                 break
+                
+        end_time = time.time()
+        extraction_time = end_time - start_time
+        LOGGER.info(f"Extraction time for letters: {extraction_time/len(self.letters):.2f} seconds per letter on average")
                 
         LOGGER.info(f"Found {len(all_links)} unique links")
         return all_links
@@ -150,6 +160,8 @@ class UFCStatsSpider:
         Args:
             url: URL of the fighter's profile page
         """
+        start_time = time.time()
+        
         html = self.fetch_page(url)
         if not html:
             return
@@ -169,6 +181,29 @@ class UFCStatsSpider:
 
         # saves data to CSV
         self._save_fighter_data(fighter_id, fighter_name, nickname, physical_data, wins, losses, draws, career_data, fight_data)
+        
+        # calculate and log extraction time
+        end_time = time.time()
+        extraction_time = end_time - start_time
+        LOGGER.info(f"Extraction time for {fighter_name or fighter_id}: {extraction_time:.2f} seconds")
+        
+        # update average extraction time
+        self._update_average_extraction_time(extraction_time)
+    
+    def _update_average_extraction_time(self, extraction_time: float) -> None:
+        """
+        Updates the running average of extraction times
+        
+        Args:
+            extraction_time: Time taken for the current extraction
+        """
+        self.total_extraction_time += extraction_time
+        self.fighter_count += 1
+        
+        if self.fighter_count > 0:
+            average_time = self.total_extraction_time / self.fighter_count
+            LOGGER.info(f"Average extraction time across {self.fighter_count} fighters: {average_time:.2f} seconds")
+    
     
     def _save_fighter_data(self, fighter_id: str, fighter_name: Optional[str], 
                           nickname: Optional[str], physical_data: Dict[str, Any],
