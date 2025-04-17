@@ -3,6 +3,8 @@ import csv
 import logging
 import time
 import datetime
+import asyncio
+import aiohttp
 from typing import Set, Optional, Dict, Any
 from bs4 import BeautifulSoup
 from scraper.fights.extractors import (
@@ -17,7 +19,9 @@ from scraper.fighters.extractors import extract_fights
 LOGGER = logging.getLogger(__name__)
 
 # FOR TESTING, ONLY ONE PAGE
-TEST_RUN = True
+TEST_RUN = False
+
+MAX_CONCURRENT_REQUESTS = 5
 
 class UFCFightsSpider:
     """
@@ -29,7 +33,6 @@ class UFCFightsSpider:
     def __init__(self):
         """Initialize the spider with output file, HTTP session, and header configurations"""
         self.output_file = 'fights.csv'
-        self.session = requests.Session()
         self.headers = {
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
         }
@@ -153,38 +156,39 @@ class UFCFightsSpider:
                 'updated_timestamp'
             ])
 
-    def run(self) -> None:
+    async def run(self) -> None:
         """
         Execute the spider's main workflow:
         1. Collect all event links
         2. Process each event's page to extract fights
         """
-        all_event_links = self.collect_all_event_links()
-        LOGGER.info(f"Found {len(all_event_links)} unique event links")
+        async with aiohttp.ClientSession(headers=self.headers) as session:
+            self.session = session
+            all_event_links = await self.collect_all_event_links()
+            LOGGER.info(f"Found {len(all_event_links)} unique event links")
             
-    def collect_all_event_links(self) -> Set[str]:
+    async def collect_all_event_links(self) -> Set[str]:
         """
         Collects links to all event profile pages
         
         Returns:
             Set of unique event profile URLs
         """
-
         all_links = set()
 
         url = f"http://ufcstats.com/statistics/events/completed{'?page=all' if not TEST_RUN else ''}"
 
-        html = self.fetch_page(url)
+        html = await self.fetch_page(url)
         if not html:
             return all_links
 
-        links = self.extract_event_page_links(html)
+        links = await self.extract_event_page_links(html)
         all_links.update(links)
 
         LOGGER.info(f"Found {len(all_links)} unique links")
         return all_links
 
-    def fetch_page(self, url: str) -> Optional[str]:
+    async def fetch_page(self, url: str) -> Optional[str]:
         """
         Helper function to fetch the HTML content of a page
         
@@ -196,14 +200,15 @@ class UFCFightsSpider:
         """
         try:
             LOGGER.info(f"Fetching page: {url}")
-            response = self.session.get(url, headers=self.headers)
-            response.raise_for_status()
-            return response.text
+            async with self.session.get(url) as response:
+                if response.status == 200:
+                    return await response.text()
+                response.raise_for_status()
         except Exception as e:
             LOGGER.error(f"Error fetching page {url}: {e}")
             return None
     
-    def extract_event_page_links(self, html: str) -> Set[str]:
+    async def extract_event_page_links(self, html: str) -> Set[str]:
         """
         Extracts event profile links from a listing page
         
@@ -213,7 +218,6 @@ class UFCFightsSpider:
         Returns:
             Set of unique events URLs
         """
-
         links = set()
         soup = BeautifulSoup(html, 'html.parser')
         event_rows = soup.select('table.b-statistics__table-events tbody tr')
@@ -237,12 +241,12 @@ class UFCFightsSpider:
                 LOGGER.info(f"Found event: {event_url}")
                 
                 # extract fights from this event
-                self.extract_fight_links(event_url)
-                time.sleep(1)
+                await self.extract_fight_links(event_url)
+                await asyncio.sleep(1)
 
         return links
 
-    def extract_fight_links(self, event_url: str) -> Set[str]:
+    async def extract_fight_links(self, event_url: str) -> Set[str]:
         """
         Extracts fight links from an event page
         
@@ -254,7 +258,7 @@ class UFCFightsSpider:
         """
         links = set()
         
-        html = self.fetch_page(event_url)
+        html = await self.fetch_page(event_url)
         if not html:
             return links
             
@@ -297,6 +301,8 @@ class UFCFightsSpider:
         
         LOGGER.info(f"Found {len(fight_rows)} fight rows on event page: {event_url}")
         
+        # process fights in batches
+        tasks = []
         for fight_row in fight_rows:
             fight_link = fight_row.select_one('td:first-child a.b-flag')
             if fight_link and fight_link.get('href'):
@@ -304,13 +310,22 @@ class UFCFightsSpider:
                 links.add(fight_url)
                 LOGGER.info(f"Found fight: {fight_url}")
                 
-                # process this fight
-                self.parse_fight_stats(fight_url, event_date, event_location, event_name)
-                time.sleep(1)
+                # task to process this fight
+                task = asyncio.create_task(self.parse_fight_stats(fight_url, event_date, event_location, event_name))
+                tasks.append(task)
+                
+                if len(tasks) >= MAX_CONCURRENT_REQUESTS:
+                    await asyncio.gather(*tasks)
+                    tasks = []
+                    await asyncio.sleep(1)
+        
+        # process any remaining tasks
+        if tasks:
+            await asyncio.gather(*tasks)
         
         return links
 
-    def parse_fight_stats(self, fight_url: str, event_date: str, event_location: str, event_name: str) -> None:
+    async def parse_fight_stats(self, fight_url: str, event_date: str, event_location: str, event_name: str) -> None:
         """
         Parses and saves statistics for a single fight
         
@@ -323,7 +338,7 @@ class UFCFightsSpider:
 
         start_time = time.time()
 
-        html = self.fetch_page(fight_url)
+        html = await self.fetch_page(fight_url)
         if not html:
             LOGGER.error(f"Could not fetch fight page: {fight_url}")
             return
@@ -345,14 +360,20 @@ class UFCFightsSpider:
         fight_strike_stats = extract_strike_data(soup, int(fight_data['round']))
 
         fight_date_limit = datetime.datetime.strptime(event_date, "%B %d, %Y")
+            
+        red_html, blue_html = await asyncio.gather(
+            self.fetch_page(f"http://ufcstats.com/fighter-details/{fighters_data['red_fighter_id']}"),
+            self.fetch_page(f"http://ufcstats.com/fighter-details/{fighters_data['blue_fighter_id']}")
+        )
 
-        red_soup = BeautifulSoup(self.fetch_page(f"http://ufcstats.com/fighter-details/{fighters_data['red_fighter_id']}"), 'html.parser')
-        blue_soup = BeautifulSoup(self.fetch_page(f"http://ufcstats.com/fighter-details/{fighters_data['blue_fighter_id']}"), 'html.parser')
+        red_soup = BeautifulSoup(red_html, 'html.parser') if red_html else None
+        blue_soup = BeautifulSoup(blue_html, 'html.parser') if blue_html else None
 
         red_fighter_snapshot = extract_fights(red_soup, fight_date_limit)
         blue_fighter_snapshot = extract_fights(blue_soup, fight_date_limit)
-
-        self._save_fight_data(fight_id, event_data, fighters_data, fight_data, fight_total_stats, fight_strike_stats, red_fighter_snapshot, blue_fighter_snapshot)
+        
+        async with asyncio.Lock():
+            self._save_fight_data(fight_id, event_data, fighters_data, fight_data, fight_total_stats, fight_strike_stats, red_fighter_snapshot, blue_fighter_snapshot)
 
         end_time = time.time()
         extraction_time = end_time - start_time
@@ -831,4 +852,4 @@ class UFCFightsSpider:
 if __name__ == '__main__':
     logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(message)s')
     spider = UFCFightsSpider()
-    spider.run()
+    asyncio.run(spider.run())
