@@ -34,6 +34,10 @@ class UFCFightsSpider:
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
         }
 
+        # declare variables for tracking extraction time avgs
+        self.total_extraction_time = 0
+        self.fight_count = 0
+
         self._initialize_csv()
 
     def _initialize_csv(self) -> None:
@@ -316,7 +320,9 @@ class UFCFightsSpider:
             event_location: Location of the event
             event_name: Name of the event
         """
-        
+
+        start_time = time.time()
+
         html = self.fetch_page(fight_url)
         if not html:
             LOGGER.error(f"Could not fetch fight page: {fight_url}")
@@ -347,6 +353,26 @@ class UFCFightsSpider:
         blue_fighter_snapshot = extract_fights(blue_soup, fight_date_limit)
 
         self._save_fight_data(fight_id, event_data, fighters_data, fight_data, fight_total_stats, fight_strike_stats, red_fighter_snapshot, blue_fighter_snapshot)
+
+        end_time = time.time()
+        extraction_time = end_time - start_time
+        LOGGER.info(f"Extraction time for fight {fight_id}: {extraction_time:.2f} seconds")
+
+        self._update_average_extraction_time(extraction_time)
+    
+    def _update_average_extraction_time(self, extraction_time: float) -> None:
+        """
+        Updates the running average of extraction times
+        
+        Args:
+            extraction_time: Time taken for the current extraction
+        """
+        self.total_extraction_time += extraction_time
+        self.fight_count += 1
+        
+        if self.fight_count > 0:
+            average_time = self.total_extraction_time / self.fight_count
+            LOGGER.info(f"Average extraction time across {self.fight_count} fights: {average_time:.2f} seconds")
 
     def _save_fight_data(self, fight_id: str, event_data: Dict[str, Any], fighters_data: Dict[str, Any], fight_data: Dict[str, Any],
                          fight_total_stats: Dict[str, Any], fight_strike_stats: Dict[str, Any], red_fighter_snapshot: Dict[str, Any], blue_fighter_snapshot: Dict[str, Any]) -> None:
