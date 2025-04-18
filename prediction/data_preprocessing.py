@@ -79,6 +79,66 @@ class UFCDataPreprocessor:
         
         return df
     
+    def handle_round_data(self, df: pd.DataFrame) -> pd.DataFrame:
+        """
+        Handle round-specific data by only considering rounds that were actually fought
+        
+        Args:
+            df: Input DataFrame
+            
+        Returns:
+            DataFrame with properly handled round data
+        """
+        logger.info("Handling round-specific data...")
+        
+        # ensure 'round' column is numeric
+        df['round'] = pd.to_numeric(df['round'], errors='coerce')
+        
+        # create a copy of the dataframe to avoid modifying the original
+        df_processed = df.copy()
+        
+        # define round-specific columns
+        round_columns = []
+        for fighter in ['red', 'blue']:
+            for round_num in range(1, 6):
+                round_columns.extend([
+                    f'{fighter}_knockdowns_landed_rd{round_num}',
+                    f'{fighter}_sig_strikes_landed_rd{round_num}',
+                    f'{fighter}_sig_strikes_thrown_rd{round_num}',
+                    f'{fighter}_sig_strike_percent_rd{round_num}',
+                    f'{fighter}_total_strikes_landed_rd{round_num}',
+                    f'{fighter}_total_strikes_thrown_rd{round_num}',
+                    f'{fighter}_takedowns_landed_rd{round_num}',
+                    f'{fighter}_takedowns_attempted_rd{round_num}',
+                    f'{fighter}_takedowns_percent_rd{round_num}',
+                    f'{fighter}_sub_attempts_rd{round_num}',
+                    f'{fighter}_reversals_rd{round_num}',
+                    f'{fighter}_control_time_rd{round_num}',
+                    f'{fighter}_head_strikes_landed_rd{round_num}',
+                    f'{fighter}_head_strikes_thrown_rd{round_num}',
+                    f'{fighter}_body_strikes_landed_rd{round_num}',
+                    f'{fighter}_body_strikes_thrown_rd{round_num}',
+                    f'{fighter}_leg_strikes_landed_rd{round_num}',
+                    f'{fighter}_leg_strikes_thrown_rd{round_num}',
+                    f'{fighter}_distance_strikes_landed_rd{round_num}',
+                    f'{fighter}_distance_strikes_thrown_rd{round_num}',
+                    f'{fighter}_clinch_strikes_landed_rd{round_num}',
+                    f'{fighter}_clinch_strikes_thrown_rd{round_num}',
+                    f'{fighter}_ground_strikes_landed_rd{round_num}',
+                    f'{fighter}_ground_strikes_thrown_rd{round_num}'
+                ])
+        
+
+        for idx, row in df_processed.iterrows():
+            rounds_fought = int(row['round']) if not pd.isna(row['round']) else 0
+            
+            for round_num in range(rounds_fought + 1, 6):
+                for col in round_columns:
+                    if f'_rd{round_num}' in col and col in df_processed.columns:
+                        df_processed.at[idx, col] = 0
+        
+        return df_processed
+    
     def engineer_features(self, df: pd.DataFrame) -> pd.DataFrame:
         """
         Create new features for prediction
@@ -91,26 +151,36 @@ class UFCDataPreprocessor:
         """
         logger.info("Engineering new features...")
         
-        # calculate win streaks and recent performance
-        df['red_win_streak'] = df.groupby('red_fighter_id')['result'].apply(
-            lambda x: x.eq('Win').astype(int).rolling(3, min_periods=1).sum()
-        )
-        df['blue_win_streak'] = df.groupby('blue_fighter_id')['result'].apply(
-            lambda x: x.eq('Win').astype(int).rolling(3, min_periods=1).sum()
-        )
+        # create a copy of the dataframe to avoid modifying the original
+        df_processed = df.copy()
         
         # calculate experience difference
-        df['experience_diff'] = df['career_red_total_ufc_fights'] - df['career_blue_total_ufc_fights']
+        df_processed['experience_diff'] = df_processed['career_red_total_ufc_fights'] - df_processed['career_blue_total_ufc_fights']
+        
+        # calculate striking efficiency
+        df_processed['red_strike_efficiency'] = df_processed['red_sig_strikes_landed'] / df_processed['red_sig_strikes_thrown'].where(df_processed['red_sig_strikes_thrown'] > 0, 1)
+        df_processed['blue_strike_efficiency'] = df_processed['blue_sig_strikes_landed'] / df_processed['blue_sig_strikes_thrown'].where(df_processed['blue_sig_strikes_thrown'] > 0, 1)
         
         # calculate takedown efficiency
-        df['red_takedown_efficiency'] = df['red_takedowns_landed'] / df['red_takedowns_attempted'].where(df['red_takedowns_attempted'] > 0, 1)
-        df['blue_takedown_efficiency'] = df['blue_takedowns_landed'] / df['blue_takedowns_attempted'].where(df['blue_takedowns_attempted'] > 0, 1)
+        df_processed['red_takedown_efficiency'] = df_processed['red_takedowns_landed'] / df_processed['red_takedowns_attempted'].where(df_processed['red_takedowns_attempted'] > 0, 1)
+        df_processed['blue_takedown_efficiency'] = df_processed['blue_takedowns_landed'] / df_processed['blue_takedowns_attempted'].where(df_processed['blue_takedowns_attempted'] > 0, 1)
         
         # calculate win rate differences
-        df['win_rate_diff'] = (df['career_red_wins_in_ufc'] / df['career_red_total_ufc_fights'].where(df['career_red_total_ufc_fights'] > 0, 1)) - \
-                             (df['career_blue_wins_in_ufc'] / df['career_blue_total_ufc_fights'].where(df['career_blue_total_ufc_fights'] > 0, 1))
+        df_processed['win_rate_diff'] = (df_processed['career_red_wins_in_ufc'] / df_processed['career_red_total_ufc_fights'].where(df_processed['career_red_total_ufc_fights'] > 0, 1)) - \
+                             (df_processed['career_blue_wins_in_ufc'] / df_processed['career_blue_total_ufc_fights'].where(df_processed['career_blue_total_ufc_fights'] > 0, 1))
         
-        return df
+        # calculate round-specific efficiencies
+        for fighter in ['red', 'blue']:
+            for round_num in range(1, 6):
+                if f'{fighter}_sig_strikes_thrown_rd{round_num}' in df_processed.columns:
+                    df_processed[f'{fighter}_strike_efficiency_rd{round_num}'] = df_processed[f'{fighter}_sig_strikes_landed_rd{round_num}'] / \
+                        df_processed[f'{fighter}_sig_strikes_thrown_rd{round_num}'].where(df_processed[f'{fighter}_sig_strikes_thrown_rd{round_num}'] > 0, 1)
+                
+                if f'{fighter}_takedowns_attempted_rd{round_num}' in df_processed.columns:
+                    df_processed[f'{fighter}_takedown_efficiency_rd{round_num}'] = df_processed[f'{fighter}_takedowns_landed_rd{round_num}'] / \
+                        df_processed[f'{fighter}_takedowns_attempted_rd{round_num}'].where(df_processed[f'{fighter}_takedowns_attempted_rd{round_num}'] > 0, 1)
+        
+        return df_processed
     
     def encode_categorical(self, df: pd.DataFrame) -> pd.DataFrame:
         """
@@ -199,6 +269,8 @@ class UFCDataPreprocessor:
         
         # load data
         fights_df = self.load_data()
+
+        fights_df = self.handle_round_data(fights_df)
         
         # apply preprocessing steps
         fights_df = self.handle_missing_values(fights_df)
@@ -226,7 +298,7 @@ def main():
     
     try:
         # prepare data
-        processed_df = preprocessor.prepare_data()
+        processed_df, artifacts = preprocessor.prepare_data()
         
         # save processed data
         processed_df.to_csv('processed_fights.csv', index=False)
