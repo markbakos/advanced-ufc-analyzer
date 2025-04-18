@@ -196,8 +196,7 @@ class UFCDataPreprocessor:
         
         categorical_columns = [
             'win_method',
-            'referee',
-            'result'
+            'referee'
         ]
         
         for col in categorical_columns:
@@ -221,7 +220,7 @@ class UFCDataPreprocessor:
         logger.info("Scaling numerical features...")
         
         # columns to exclude from scaling
-        exclude_columns = ['fight_id', 'event_date', 'red_fighter_id', 'blue_fighter_id']
+        exclude_columns = ['fight_id', 'event_date', 'red_fighter_id', 'blue_fighter_id', 'result']
         
         # get numerical columns
         numeric_columns = df.select_dtypes(include=['int64', 'float64']).columns
@@ -256,7 +255,7 @@ class UFCDataPreprocessor:
         
         return df
     
-    def prepare_data(self) -> Tuple[pd.DataFrame, Dict[str, Any]]:
+    def prepare_data(self) -> Tuple[pd.DataFrame, pd.Series, Dict[str, Any]]:
         """
         Prepare the data applying every preprocessing step.
         
@@ -269,7 +268,14 @@ class UFCDataPreprocessor:
         
         # load data
         fights_df = self.load_data()
-
+        
+        # extract target variable before preprocessing
+        target = fights_df['result'].copy()
+        
+        if 'result' in fights_df.columns:
+            fights_df = fights_df.drop(columns=['result'])
+        
+        # handle round data first to avoid issues with missing values
         fights_df = self.handle_round_data(fights_df)
         
         # apply preprocessing steps
@@ -280,6 +286,12 @@ class UFCDataPreprocessor:
         fights_df = self.scale_features(fights_df)
         fights_df = self.remove_bias(fights_df)
         
+        # encode the target variable separately
+        if 'result' in target.index:
+            le = LabelEncoder()
+            target = pd.Series(le.fit_transform(target.astype(str)), index=target.index)
+            self.label_encoders['result'] = le
+        
         # create preprocessing artifacts dictionary
         artifacts = {
             'label_encoders': self.label_encoders,
@@ -288,7 +300,7 @@ class UFCDataPreprocessor:
         
         logger.info("Data preparation completed successfully")
         
-        return fights_df, artifacts
+        return fights_df, target, artifacts
 
 def main():
     """
@@ -298,11 +310,12 @@ def main():
     
     try:
         # prepare data
-        processed_df, artifacts = preprocessor.prepare_data()
+        features_df, target, artifacts = preprocessor.prepare_data()
         
         # save processed data
-        processed_df.to_csv('processed_fights.csv', index=False)
-        logger.info("Processed data saved to 'processed_fights.csv'")
+        features_df.to_csv('processed_fights_features.csv', index=False)
+        target.to_csv('processed_fights_target.csv', index=True)
+        logger.info("Processed data saved to 'processed_fights_features.csv' and 'processed_fights_target.csv'")
         
     except Exception as e:
         logger.error(f"Error during data preprocessing: {str(e)}")
