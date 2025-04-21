@@ -237,7 +237,7 @@ class UFCDataPreprocessor:
         logger.info("Scaling numerical features...")
         
         # columns to exclude from scaling
-        exclude_columns = ['fight_id', 'event_date', 'red_fighter_id', 'blue_fighter_id', 'result']
+        exclude_columns = ['fight_id', 'event_date', 'red_fighter_id', 'blue_fighter_id', 'result', 'round', 'total_rounds']
         
         # get numerical columns
         numeric_columns = df.select_dtypes(include=['int64', 'float64']).columns
