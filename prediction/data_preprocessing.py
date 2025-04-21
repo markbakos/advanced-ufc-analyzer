@@ -37,21 +37,37 @@ class UFCDataPreprocessor:
         fighters_df = pd.read_csv(self.fighters_path)
 
         return fights_df
-        
 
-    def handle_date_columns(self, df: pd.DataFrame) -> pd.DataFrame:
+    def calculate_days_since(self, df: pd.DataFrame) -> pd.DataFrame:
         """
-        Handle date columns in the dataset
-        """
-        logger.info("Handling date columns...")
-
-        date_columns = ['event_date', 'last_fight_date', 'last_win_date']
+        Calculate days since last fight and last win and handles date columns
         
+        Args:
+            df: Input DataFrame with date columns
+            
+        Returns:
+            DataFrame with days since columns
+        """
+        logger.info("Calculating days since last fight and last win...")
+        
+        df_processed = df.copy()
+        
+        current_date = pd.Timestamp.now().date()
+
+        date_columns = [
+            'career_red_last_fight_date', 'career_blue_last_fight_date', 'career_red_last_win_date', 'career_blue_last_win_date', 'event_date'
+        ]
+
         for col in date_columns:
-            if col in df.columns:
-                df[col] = pd.to_datetime(df[col])
-        
-        return df
+            if col in df_processed.columns:
+                df_processed[col] = pd.to_datetime(df_processed[col], errors='coerce')
+
+        for col in ['career_red_last_fight_date', 'career_blue_last_fight_date', 'career_red_last_win_date', 'career_blue_last_win_date']:
+            if col in df_processed.columns:
+                df_processed[col] = df_processed[col].apply(lambda x: (current_date - x.date()).days if pd.notna(x) else 0)
+
+        return df_processed
+    
     
     def handle_missing_values(self, df: pd.DataFrame) -> pd.DataFrame:
         """
@@ -195,6 +211,7 @@ class UFCDataPreprocessor:
         logger.info("Encoding categorical variables...")
         
         categorical_columns = [
+            'location',
             'win_method',
             'referee'
         ]
@@ -293,26 +310,28 @@ class UFCDataPreprocessor:
         
         # load data
         fights_df = self.load_data()
-
-        # mirror data
-        fights_df = self.mirror_data(fights_df)
         
         # extract target variable before preprocessing
-        target = fights_df['result'].copy()
         
-        if 'result' in fights_df.columns:
-            fights_df = fights_df.drop(columns=['result'])
         
         # handle round data first to avoid issues with missing values
         fights_df = self.handle_round_data(fights_df)
         
         # apply preprocessing steps
         fights_df = self.handle_missing_values(fights_df)
-        fights_df = self.handle_date_columns(fights_df)
+        fights_df = self.calculate_days_since(fights_df)
         fights_df = self.engineer_features(fights_df)
         fights_df = self.encode_categorical(fights_df)
         fights_df = self.scale_features(fights_df)
         fights_df = self.remove_bias(fights_df)
+
+        # mirror data
+        fights_df = self.mirror_data(fights_df)
+
+        target = fights_df['result'].copy()
+        
+        if 'result' in fights_df.columns:
+            fights_df = fights_df.drop(columns=['result'])
         
         # encode the target variable separately
         if 'result' in target.index:
