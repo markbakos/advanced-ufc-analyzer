@@ -254,6 +254,31 @@ class UFCDataPreprocessor:
         df = df.drop(columns=[col for col in bias_columns if col in df.columns])
         
         return df
+
+    def mirror_data(self, df: pd.DataFrame) -> pd.DataFrame:
+        """
+        Mirror the data to create a balanced dataset
+        """
+        logger.info("Mirroring data...")
+        
+        # create a copy of the dataframe to avoid modifying the original
+        df_processed = df.copy()
+        
+        red_columns = [col for col in df_processed.columns if 'red' in col]
+        blue_columns = [col for col in df_processed.columns if 'blue' in col]
+
+        red_to_blue = {col: col.replace('red', 'blue') for col in red_columns}
+        blue_to_red = {col: col.replace('blue', 'red') for col in blue_columns}
+
+        swapped_df = df_processed.rename(columns={**red_to_blue, **blue_to_red})
+
+        if 'result' in df_processed.columns:
+            swapped_df['result'] = swapped_df['result'].map({"red": "blue", "blue": "red", "draw": "draw"})
+        
+        # combine original and mirrored data
+        combined_df = pd.concat([df_processed, swapped_df], ignore_index=True)
+        
+        return combined_df
     
     def prepare_data(self) -> Tuple[pd.DataFrame, pd.Series, Dict[str, Any]]:
         """
@@ -268,6 +293,9 @@ class UFCDataPreprocessor:
         
         # load data
         fights_df = self.load_data()
+
+        # mirror data
+        fights_df = self.mirror_data(fights_df)
         
         # extract target variable before preprocessing
         target = fights_df['result'].copy()
@@ -301,6 +329,7 @@ class UFCDataPreprocessor:
         logger.info("Data preparation completed successfully")
         
         return fights_df, target, artifacts
+        
 
 def main():
     """
