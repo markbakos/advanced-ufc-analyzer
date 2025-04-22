@@ -4,7 +4,7 @@ from typing import Dict, Any, Optional, Tuple
 
 import requests
 from bs4 import BeautifulSoup
-from .utils import (
+from scraper.fighters.utils import (
     convert_height_to_cm,
     convert_weight_to_kg,
     convert_reach_to_cm,
@@ -288,18 +288,20 @@ def extract_fights(soup: BeautifulSoup, fight_date_limit : Optional[datetime.dat
                 try:
                     fight_date = datetime.datetime.strptime(date_text, "%b. %d, %Y")
 
-                    if fighter_stats['last_fight_date'] is None:
-                        fighter_stats['last_fight_date'] = fight_date
-
-                    if result == 'win' and fighter_stats['last_win_date'] is None:
-                        fighter_stats['last_win_date'] = fight_date
-                    
                     # skip if date limit is set and fight date is not before limit
                     if fight_date_limit and fight_date >= fight_date_limit:
                         should_skip = True
                         
+                    if not should_skip:
+                        if fighter_stats['last_fight_date'] is None:
+                            fighter_stats['last_fight_date'] = fight_date
+
+                        if result == 'win' and fighter_stats['last_win_date'] is None:
+                            fighter_stats['last_win_date'] = fight_date
+
                 except Exception as e:
-                    logger.debug(f"Error parsing fight date: {date_text}, error: {e}")
+                    print(f"Error parsing fight date: {date_text}, error: {e}")
+
         except IndexError:
             pass  # continue if date extraction fails
 
