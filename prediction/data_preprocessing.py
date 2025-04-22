@@ -67,7 +67,46 @@ class UFCDataPreprocessor:
                 df_processed[col] = df_processed[col].apply(lambda x: (current_date - x.date()).days if pd.notna(x) else 0)
 
         return df_processed
-    
+
+    def handle_time_columns(self, df: pd.DataFrame) -> pd.DataFrame:
+        """
+        Handle time columns in the dataset by converting mm:ss format to seconds
+
+        Args:
+            df: Input DataFrame
+            
+        Returns:
+            DataFrame with handled time columns
+        """
+        logger.info("Handling time columns...")
+        
+        df_processed = df.copy()
+        
+        time_columns = [
+            'time', 'red_control_time', 'blue_control_time',
+            'red_control_time_rd1', 'red_control_time_rd2', 'red_control_time_rd3', 'red_control_time_rd4', 'red_control_time_rd5',
+            'blue_control_time_rd1', 'blue_control_time_rd2', 'blue_control_time_rd3', 'blue_control_time_rd4', 'blue_control_time_rd5'
+        ]
+        
+        def convert_time_to_seconds(time_str):
+            """Convert time string in mm:ss format to seconds"""
+            if pd.isna(time_str) or time_str == "UNKNOWN":
+                return 0
+            
+            try:
+                if ':' in str(time_str):
+                    minutes, seconds = map(int, str(time_str).split(':'))
+                    return minutes * 60 + seconds
+                else:
+                    return float(time_str)
+            except (ValueError, TypeError):
+                return 0
+        
+        for col in time_columns:
+            if col in df_processed.columns:
+                df_processed[col] = df_processed[col].apply(convert_time_to_seconds)
+
+        return df_processed
     
     def handle_missing_values(self, df: pd.DataFrame) -> pd.DataFrame:
         """
@@ -80,7 +119,7 @@ class UFCDataPreprocessor:
             DataFrame with handled missing values
         """
         logger.info("Handling missing values...")
-        
+
         # create imputers for different types of features
         numeric_imputer = SimpleImputer(strategy='median')
         categorical_imputer = SimpleImputer(strategy='constant', fill_value='UNKNOWN')
@@ -320,6 +359,7 @@ class UFCDataPreprocessor:
         # apply preprocessing steps
         fights_df = self.handle_missing_values(fights_df)
         fights_df = self.calculate_days_since(fights_df)
+        fights_df = self.handle_time_columns(fights_df)
         fights_df = self.engineer_features(fights_df)
         fights_df = self.encode_categorical(fights_df)
         fights_df = self.scale_features(fights_df)
