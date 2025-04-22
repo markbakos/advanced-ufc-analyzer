@@ -51,8 +51,8 @@ class UFCDataPreprocessor:
         logger.info("Calculating days since last fight and last win...")
         
         df_processed = df.copy()
-        
-        current_date = pd.Timestamp.now().date()
+
+        df_processed['event_date'] = pd.to_datetime(df_processed['event_date'])
 
         date_columns = [
             'career_red_last_fight_date', 'career_blue_last_fight_date', 'career_red_last_win_date', 'career_blue_last_win_date', 'event_date'
@@ -64,7 +64,9 @@ class UFCDataPreprocessor:
 
         for col in ['career_red_last_fight_date', 'career_blue_last_fight_date', 'career_red_last_win_date', 'career_blue_last_win_date']:
             if col in df_processed.columns:
-                df_processed[col] = df_processed[col].apply(lambda x: (current_date - x.date()).days if pd.notna(x) else 0)
+                days_since_col = col.replace('date', 'days_since')
+                df_processed[days_since_col] = (df_processed['event_date'] - df_processed[col]).dt.days
+                df_processed[days_since_col] = df_processed[days_since_col].apply(lambda x: 0 if pd.isna(x) or x < 0 else x)
 
         return df_processed
 
