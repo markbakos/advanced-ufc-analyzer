@@ -565,7 +565,7 @@ def extract_strike_data(soup: BeautifulSoup, rounds: int) -> Dict[str, Any]:
             'blue_ground_strikes_thrown_rd5': None,
             }
 
-    for round in range(rounds+1, rounds+rounds+1, 1):
+    for round in range(rounds+1, rounds+rounds+2, 1):
         try:
             stats_tables = soup.select('table tbody.b-fight-details__table-body tr.b-fight-details__table-row')
             if not stats_tables or len(stats_tables) < 2:
