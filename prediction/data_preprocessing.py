@@ -356,6 +356,9 @@ class UFCDataPreprocessor:
 
         swapped_df = df_processed.rename(columns={**red_to_blue, **blue_to_red})
 
+        swapped_df['experience_diff'] = swapped_df['experience_diff'] * -1
+        swapped_df['win_rate_diff'] = swapped_df['win_rate_diff'] * -1
+
         if 'result' in df_processed.columns:
             swapped_df['result'] = swapped_df['result'].map({"red": "blue", "blue": "red", "draw": "draw"})
         
@@ -377,9 +380,6 @@ class UFCDataPreprocessor:
         
         # load data
         fights_df = self.load_data()
-        
-        # extract target variable before preprocessing
-        
         
         # handle round data first to avoid issues with missing values
         fights_df = self.handle_round_data(fights_df)
