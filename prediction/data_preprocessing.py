@@ -34,7 +34,6 @@ class UFCDataPreprocessor:
         logger.info("Loading data...")
 
         fights_df = pd.read_csv(self.fights_path)
-        fighters_df = pd.read_csv(self.fighters_path)
 
         return fights_df
 
@@ -130,8 +129,13 @@ class UFCDataPreprocessor:
         numeric_columns = df.select_dtypes(include=['int64', 'float64']).columns
         categorical_columns = df.select_dtypes(include=['object']).columns
         
-        # apply imputers
-        df[numeric_columns] = numeric_imputer.fit_transform(df[numeric_columns])
+        # exclude round-specific columns from imputation
+        round_columns = [col for col in numeric_columns if any(f'_rd{round_num}' in col for round_num in range(1, 6))]
+        non_round_numeric_columns = [col for col in numeric_columns if col not in round_columns]
+        
+        # apply imputers only to non-round-specific columns
+        if len(non_round_numeric_columns) > 0:
+            df[non_round_numeric_columns] = numeric_imputer.fit_transform(df[non_round_numeric_columns])
         df[categorical_columns] = categorical_imputer.fit_transform(df[categorical_columns])
         
         return df
@@ -185,15 +189,19 @@ class UFCDataPreprocessor:
                     f'{fighter}_ground_strikes_thrown_rd{round_num}'
                 ])
         
+        for col in round_columns:
+            if col not in df_processed.columns:
+                df_processed[col] = np.nan
 
         for idx, row in df_processed.iterrows():
             rounds_fought = int(row['round']) if not pd.isna(row['round']) else 0
-            
+
+            # NaN for all rounds after the last round
             for round_num in range(rounds_fought + 1, 6):
-                for col in round_columns:
-                    if f'_rd{round_num}' in col and col in df_processed.columns:
-                        df_processed.at[idx, col] = 0
-        
+                round_features = [col for col in df_processed.columns if f'_rd{round_num}' in col]
+                if len(round_features) > 0:
+                    df_processed.loc[idx, round_features] = np.nan
+
         return df_processed
     
     def engineer_features(self, df: pd.DataFrame) -> pd.DataFrame:
@@ -284,10 +292,28 @@ class UFCDataPreprocessor:
         numeric_columns = df.select_dtypes(include=['int64', 'float64']).columns
         numeric_columns = [col for col in numeric_columns if col not in exclude_columns]
         
-        # scale features
-        scaler = StandardScaler()
-        df[numeric_columns] = scaler.fit_transform(df[numeric_columns])
-        self.scalers['numeric'] = scaler
+        # identify round-specific columns
+        round_columns = [col for col in numeric_columns if any(f'_rd{round_num}' in col for round_num in range(1, 6))]
+        non_round_numeric_columns = [col for col in numeric_columns if col not in round_columns]
+        
+        # scale non-round-specific features
+        if len(non_round_numeric_columns) > 0:
+            scaler = StandardScaler()
+            df[non_round_numeric_columns] = scaler.fit_transform(df[non_round_numeric_columns])
+            self.scalers['numeric'] = scaler
+        
+        # scale round-specific features separately for each round
+        for round_num in range(1, 6):
+            round_cols = [col for col in round_columns if f'_rd{round_num}' in col]
+            if len(round_cols) > 0:
+                round_mask = df['round'] >= round_num
+                
+                # only scale features for rounds that occurred
+                if round_mask.any():
+                    scaler = StandardScaler()
+                    temp_df = df.loc[round_mask, round_cols].copy()
+                    df.loc[round_mask, round_cols] = scaler.fit_transform(temp_df)
+                    self.scalers[f'round_{round_num}'] = scaler
         
         return df
     
@@ -363,7 +389,7 @@ class UFCDataPreprocessor:
         fights_df = self.calculate_days_since(fights_df)
         fights_df = self.handle_time_columns(fights_df)
         fights_df = self.engineer_features(fights_df)
-        fights_df = self.encode_categorical(fights_df)
+        # fights_df = self.encode_categorical(fights_df)
         fights_df = self.scale_features(fights_df)
         fights_df = self.remove_bias(fights_df)
 
