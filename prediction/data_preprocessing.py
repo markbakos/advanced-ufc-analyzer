@@ -389,7 +389,7 @@ class UFCDataPreprocessor:
         fights_df = self.calculate_days_since(fights_df)
         fights_df = self.handle_time_columns(fights_df)
         fights_df = self.engineer_features(fights_df)
-        # fights_df = self.encode_categorical(fights_df)
+        fights_df = self.encode_categorical(fights_df)
         fights_df = self.scale_features(fights_df)
         fights_df = self.remove_bias(fights_df)
 
