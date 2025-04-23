@@ -65,7 +65,7 @@ class UFCDataPreprocessor:
             if col in df_processed.columns:
                 days_since_col = col.replace('date', 'days_since')
                 df_processed[days_since_col] = (df_processed['event_date'] - df_processed[col]).dt.days
-                df_processed[days_since_col] = df_processed[days_since_col].apply(lambda x: 0 if pd.isna(x) or x < 0 else x)
+                df_processed[days_since_col] = df_processed[days_since_col].apply(lambda x: np.nan if pd.isna(x) or x < 0 else x)
 
         return df_processed
 
@@ -92,7 +92,7 @@ class UFCDataPreprocessor:
         def convert_time_to_seconds(time_str):
             """Convert time string in mm:ss format to seconds"""
             if pd.isna(time_str) or time_str == "UNKNOWN":
-                return 0
+                return np.nan
             
             try:
                 if ':' in str(time_str):
