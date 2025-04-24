@@ -4,7 +4,13 @@ import os
 from sklearn.model_selection import train_test_split
 
 class DataSplit:
+    """
+    Class to split the dataset into train, validation and test sets
+    """
     def __init__(self, features_path: str = './processed_fights_features.csv', target_path: str = './processed_fights_target.csv'):
+        """
+        Initialize the DataSplit class
+        """
         self.features_path = features_path
         self.target_path = target_path
         self.features_df = pd.read_csv(features_path)
@@ -12,11 +18,13 @@ class DataSplit:
         self.target = self.target_df['result'].values
 
     def split_data(self):
+        """
+        Split the dataset into train, validation and test indices
+        """
         total_samples = len(self.features_df)
         half_samples = total_samples // 2
         
         original_indices = np.arange(0, half_samples)
-        mirrored_indices = np.arange(half_samples, total_samples)
 
         train_indices, temp_indices = train_test_split(
             original_indices,
@@ -48,6 +56,9 @@ class DataSplit:
 
 
     def save_data_split(self, data_split_indices: dict):
+        """
+        Save the train, validation and test sets to csv files from indices
+        """
         output_dir = 'data/splits'
         os.makedirs(output_dir, exist_ok=True)    
 
