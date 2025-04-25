@@ -3,6 +3,7 @@ import pandas as pd
 import os
 from keras import callbacks
 from model import prediction_model
+from evaluate import evaluate_model
 
 def train_model():
     """
@@ -58,6 +59,9 @@ def train_model():
     # save history
     with open('history.json', 'w') as f:
         json.dump(history.history, f)
-        
+    
+    # evaluate model
+    evaluate_model(model, test_features, test_target)
+
 if __name__ == '__main__':
     train_model()
