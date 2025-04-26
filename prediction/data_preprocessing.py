@@ -286,7 +286,7 @@ class UFCDataPreprocessor:
         logger.info("Scaling numerical features...")
         
         # columns to exclude from scaling
-        exclude_columns = ['fight_id', 'event_date', 'red_fighter_id', 'blue_fighter_id', 'result', 'total_rounds']
+        exclude_columns = ['fight_id', 'event_date', 'red_fighter_id', 'blue_fighter_id', 'result']
         
         # get numerical columns
         numeric_columns = df.select_dtypes(include=['int64', 'float64']).columns
@@ -331,8 +331,10 @@ class UFCDataPreprocessor:
         
         # remove info that shouldn't affect outcome
         bias_columns = [
+            'fight_id',
             'event_name',
             'event_date',
+            'total_rounds',
             'updated_timestamp',
             'career_red_last_fight_date',
             'career_blue_last_fight_date',
@@ -439,7 +441,7 @@ def main():
         
         # save processed data
         features_df.to_csv('processed_fights_features.csv', index=False)
-        
+
         target_df = pd.DataFrame({'result': target})
         target_df.to_csv('processed_fights_target.csv', index=False)
         
