@@ -439,7 +439,10 @@ def main():
         
         # save processed data
         features_df.to_csv('processed_fights_features.csv', index=False)
-        target.to_csv('processed_fights_target.csv', index=False)
+        
+        target_df = pd.DataFrame({'result': target})
+        target_df.to_csv('processed_fights_target.csv', index=False)
+        
         logger.info("Processed data saved to 'processed_fights_features.csv' and 'processed_fights_target.csv'")
         
     except Exception as e:
