@@ -286,7 +286,7 @@ class UFCDataPreprocessor:
         logger.info("Scaling numerical features...")
         
         # columns to exclude from scaling
-        exclude_columns = ['fight_id', 'event_date', 'red_fighter_id', 'blue_fighter_id', 'result', 'round', 'total_rounds']
+        exclude_columns = ['fight_id', 'event_date', 'red_fighter_id', 'blue_fighter_id', 'result', 'total_rounds']
         
         # get numerical columns
         numeric_columns = df.select_dtypes(include=['int64', 'float64']).columns
@@ -332,7 +332,17 @@ class UFCDataPreprocessor:
         # remove info that shouldn't affect outcome
         bias_columns = [
             'event_name',
-            'event_date'
+            'event_date',
+            'updated_timestamp',
+            'career_red_last_fight_date',
+            'career_blue_last_fight_date',
+            'career_red_last_win_date',
+            'career_blue_last_win_date',
+            'red_fighter_id',
+            'blue_fighter_id',
+            'red_fighter_name',
+            'blue_fighter_name',
+            'round'
         ]
         
         df = df.drop(columns=[col for col in bias_columns if col in df.columns])
@@ -402,11 +412,9 @@ class UFCDataPreprocessor:
         if 'result' in fights_df.columns:
             fights_df = fights_df.drop(columns=['result'])
         
-        # encode the target variable separately
-        if 'result' in target.index:
-            le = LabelEncoder()
-            target = pd.Series(le.fit_transform(target.astype(str)), index=target.index)
-            self.label_encoders['result'] = le
+        le = LabelEncoder()
+        target = pd.Series(le.fit_transform(target.astype(str)), index=target.index)
+        self.label_encoders['result'] = le
         
         # create preprocessing artifacts dictionary
         artifacts = {
@@ -431,7 +439,7 @@ def main():
         
         # save processed data
         features_df.to_csv('processed_fights_features.csv', index=False)
-        target.to_csv('processed_fights_target.csv', index=True)
+        target.to_csv('processed_fights_target.csv', index=False)
         logger.info("Processed data saved to 'processed_fights_features.csv' and 'processed_fights_target.csv'")
         
     except Exception as e:
