@@ -247,8 +247,10 @@ def extract_fights(soup: BeautifulSoup, fight_date_limit : Optional[datetime.dat
         'sub_attempts_absorbed': 0,
         'total_rounds': 0,
         'total_time_minutes': 0,
+        'result_momentum_score': 0,
+        'stats_momentum_score': 0,
         'last_fight_date': None,
-        'last_win_date': None
+        'last_win_date': None,
     }
 
     fight_table = soup.select_one('.b-fight-details__table_type_event-details')
@@ -317,18 +319,30 @@ def extract_fights(soup: BeautifulSoup, fight_date_limit : Optional[datetime.dat
             fighter_stats['wins_in_ufc'] += 1
             if "dec" in method.lower():
                 fighter_stats['wins_by_dec'] += 1
+                if fighter_stats['total_ufc_fights'] <= 3:
+                    fighter_stats['result_momentum_score'] += 0.75
             elif "sub" in method.lower():
                 fighter_stats['wins_by_sub'] += 1
+                if fighter_stats['total_ufc_fights'] <= 3:
+                    fighter_stats['result_momentum_score'] += 1
             elif "ko/tko" in method.lower():
                 fighter_stats['wins_by_ko'] += 1
+                if fighter_stats['total_ufc_fights'] <= 3:
+                    fighter_stats['result_momentum_score'] += 1
         elif result.lower() == "loss":
             fighter_stats['losses_in_ufc'] += 1
             if "dec" in method.lower():
                 fighter_stats['losses_by_dec'] += 1
+                if fighter_stats['total_ufc_fights'] <= 3:
+                    fighter_stats['result_momentum_score'] -= 0.75
             elif "sub" in method.lower():
                 fighter_stats['losses_by_sub'] += 1
+                if fighter_stats['total_ufc_fights'] <= 3:
+                    fighter_stats['result_momentum_score'] -= 1
             elif "ko/tko" in method.lower():
                 fighter_stats['losses_by_ko'] += 1
+                if fighter_stats['total_ufc_fights'] <= 3:
+                    fighter_stats['result_momentum_score'] -= 1
         elif result.lower() == "draw":
             fighter_stats['draws_in_ufc'] += 1
 
@@ -337,26 +351,50 @@ def extract_fights(soup: BeautifulSoup, fight_date_limit : Optional[datetime.dat
         # knockdowns
         kd_data = cols[2].select('p')
         if len(kd_data) >= 2:
-            fighter_stats['knockdowns_landed'] += safe_int_convert(kd_data[0].get_text(strip=True))
-            fighter_stats['knockdowns_absorbed'] += safe_int_convert(kd_data[1].get_text(strip=True))
+            knockdowns_landed = safe_int_convert(kd_data[0].get_text(strip=True))
+            fighter_stats['knockdowns_landed'] += knockdowns_landed
+            if fighter_stats['total_ufc_fights'] <= 3:
+                fighter_stats['stats_momentum_score'] += knockdowns_landed
+            knockdowns_absorbed = safe_int_convert(kd_data[1].get_text(strip=True))
+            fighter_stats['knockdowns_absorbed'] += knockdowns_absorbed
+            if fighter_stats['total_ufc_fights'] <= 3:
+                fighter_stats['stats_momentum_score'] -= knockdowns_absorbed
 
         #strikes
         strike_data = cols[3].select('p')
         if len(strike_data) >= 2:
-            fighter_stats['strikes_landed'] += safe_int_convert(strike_data[0].get_text(strip=True) or 0)
-            fighter_stats['strikes_absorbed'] += safe_int_convert(strike_data[1].get_text(strip=True) or 0)
+            strikes_landed = safe_int_convert(strike_data[0].get_text(strip=True) or 0)
+            fighter_stats['strikes_landed'] += strikes_landed
+            if fighter_stats['total_ufc_fights'] <= 3:
+                fighter_stats['stats_momentum_score'] += (strikes_landed * 0.1)
+            strikes_absorbed = safe_int_convert(strike_data[1].get_text(strip=True) or 0)
+            fighter_stats['strikes_absorbed'] += strikes_absorbed
+            if fighter_stats['total_ufc_fights'] <= 3:
+                fighter_stats['stats_momentum_score'] -= (strikes_absorbed * 0.1)
 
         # takedowns
         td_data = cols[4].select('p')
         if len(td_data) >= 2:
-            fighter_stats['takedowns_landed'] += safe_int_convert(td_data[0].get_text(strip=True) or 0)
-            fighter_stats['takedowns_absorbed'] += safe_int_convert(td_data[1].get_text(strip=True) or 0)
+            takedowns_landed = safe_int_convert(td_data[0].get_text(strip=True) or 0)
+            fighter_stats['takedowns_landed'] += takedowns_landed
+            if fighter_stats['total_ufc_fights'] <= 3:
+                fighter_stats['stats_momentum_score'] += (takedowns_landed * 0.2)
+            takedowns_absorbed = safe_int_convert(td_data[1].get_text(strip=True) or 0)
+            fighter_stats['takedowns_absorbed'] += takedowns_absorbed
+            if fighter_stats['total_ufc_fights'] <= 3:
+                fighter_stats['stats_momentum_score'] -= (takedowns_absorbed * 0.2)
 
         # sub attempts
         sub_data = cols[5].select('p')
         if len(sub_data) >= 2:
-            fighter_stats['sub_attempts_landed'] += safe_int_convert(sub_data[0].get_text(strip=True) or 0)
-            fighter_stats['sub_attempts_absorbed'] += safe_int_convert(sub_data[1].get_text(strip=True) or 0)
+            sub_attempts_landed = safe_int_convert(sub_data[0].get_text(strip=True) or 0)
+            fighter_stats['sub_attempts_landed'] += sub_attempts_landed
+            if fighter_stats['total_ufc_fights'] <= 3:
+                fighter_stats['stats_momentum_score'] += (sub_attempts_landed * 0.8)
+            sub_attempts_absorbed = safe_int_convert(sub_data[1].get_text(strip=True) or 0)
+            fighter_stats['sub_attempts_absorbed'] += sub_attempts_absorbed
+            if fighter_stats['total_ufc_fights'] <= 3:
+                fighter_stats['stats_momentum_score'] -= (sub_attempts_absorbed * 0.8)
 
         # get round and time info
         round_num = safe_int_convert(row.select('td')[8].get_text(strip=True))
