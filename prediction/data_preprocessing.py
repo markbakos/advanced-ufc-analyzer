@@ -4,17 +4,18 @@ from sklearn.preprocessing import StandardScaler, LabelEncoder
 from sklearn.impute import SimpleImputer
 from typing import Tuple, Dict, Any
 import logging
+import os
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
-class UFCDataPreprocessor:
+class UFCFightsPreprocessor:
     """
-    Preprocessing fight data for machine learning
+    Preprocessing fight data for training model
     Handles missing values, date columns and feature engineering
     """
     
-    def __init__(self, fights_path: str = 'fights.csv', fighters_path: str = 'fighters.csv'):
+    def __init__(self, fights_path: str = 'fights.csv', fighters_path: str = 'fighters.csv', output_dir: str = 'data/processed'):
         """
         Initialize the preprocessor with paths to data files.
         
@@ -27,6 +28,10 @@ class UFCDataPreprocessor:
         self.label_encoders = {}
         self.scalers = {}
 
+        self.output_dir = output_dir
+        self.output_file = 'processed_fights_features.csv'
+        self.output_df = pd.DataFrame()
+
     def load_data(self) -> pd.DataFrame:
         """
         Load the data from the CSV files
@@ -36,6 +41,57 @@ class UFCDataPreprocessor:
         fights_df = pd.read_csv(self.fights_path)
 
         return fights_df
+
+    def _save_data(self, target_df: pd.Series) -> None:
+        """
+        Save the data to the CSV file
+        """
+        logger.info("Saving processed data...")
+        
+        save_path = self.output_dir
+        
+        # create the directory
+        os.makedirs(save_path, exist_ok=True)
+            
+        # define file paths
+        features_file = os.path.join(save_path, self.output_file)
+        target_file = os.path.join(save_path, 'processed_fights_target.csv')
+        
+        # save dataframe to csv
+        self.output_df.to_csv(features_file, index=False)
+        
+        # save target to csv
+        target_df = pd.DataFrame({'result': target_df})
+        target_df.to_csv(target_file, index=False)
+        
+        logger.info(f"Processed features saved to {features_file}")
+        logger.info(f"Target values saved to {target_file}")
+
+    # #             fight metadata
+    #             'total_rounds',
+                
+    #             #red fighter
+    #             'red_total_ufc_fights', 'red_wins_in_ufc', 'red_losses_in_ufc', 'red_draws_in_ufc',
+    #             'red_wins_by_dec', 'red_losses_by_dec', 'red_wins_by_sub', 'red_losses_by_sub', 'red_wins_by_ko', 'red_losses_by_ko', 
+    #             'red_knockdowns_landed', 'red_knockdowns_absorbed', 'red_total_strikes_landed', 'red_total_strikes_absorbed',
+    #             'red_takedowns_landed', 'red_takedowns_absorbed', 'red_sub_attempts_landed', 'red_sub_attempts_absorbed', 'red_total_rounds',
+    #             'red_total_time_minutes', 'red_avg_knockdowns_landed', 'red_avg_knockdowns_absorbed', 'red_avg_strikes_landed',
+    #             'red_avg_strikes_absorbed', 'red_avg_takedowns_landed', 'red_avg_takedowns_absorbed','red_avg_submission_attempts_landed',
+    #             'red_avg_submission_attempts_absorbed', 'red_avg_fight_time_min',
+
+    #             'red_last_fight_days_since', 'red_last_win_days_since',
+
+    #             #blue fighter
+    #             'blue_total_ufc_fights', 'blue_wins_in_ufc', 'blue_losses_in_ufc', 'blue_draws_in_ufc',
+    #             'blue_wins_by_dec', 'blue_losses_by_dec', 'blue_wins_by_sub', 'blue_losses_by_sub', 'blue_wins_by_ko', 'blue_losses_by_ko', 
+    #             'blue_knockdowns_landed', 'blue_knockdowns_absorbed', 'blue_total_strikes_landed', 'blue_total_strikes_absorbed',
+    #             'blue_significant_strikes_landed', 'blue_significant_strikes_absorbed', 'blue_takedowns_landed',
+    #             'blue_takedowns_absorbed', 'blue_sub_attempts_landed', 'blue_sub_attempts_absorbed', 'blue_total_rounds',
+    #             'blue_total_time_minutes', 'blue_avg_knockdowns_landed', 'blue_avg_knockdowns_absorbed', 'blue_avg_strikes_landed',
+    #             'blue_avg_strikes_absorbed', 'blue_avg_takedowns_landed', 'blue_avg_takedowns_absorbed', 'blue_avg_submission_attempts_landed',
+    #             'blue_avg_submission_attempts_absorbed', 'blue_avg_fight_time_min',
+
+    #             'blue_last_fight_days_since', 'blue_last_win_days_since',
 
     def calculate_days_since(self, df: pd.DataFrame) -> pd.DataFrame:
         """
@@ -393,26 +449,30 @@ class UFCDataPreprocessor:
         # load data
         fights_df = self.load_data()
         
-        # handle round data first to avoid issues with missing values
-        fights_df = self.handle_round_data(fights_df)
+        self.output_df = fights_df[['fight_id']].copy()
         
-        # apply preprocessing steps
-        fights_df = self.handle_missing_values(fights_df)
-        fights_df = self.calculate_days_since(fights_df)
-        fights_df = self.handle_time_columns(fights_df)
-        fights_df = self.engineer_features(fights_df)
+        # # handle round data first to avoid issues with missing values
+        # fights_df = self.handle_round_data(fights_df)
+        
+        # # apply preprocessing steps
+        # fights_df = self.handle_missing_values(fights_df)
+        # fights_df = self.calculate_days_since(fights_df)
+        # fights_df = self.handle_time_columns(fights_df)
+        # fights_df = self.engineer_features(fights_df)
 
         # mirror data
-        fights_df = self.mirror_data(fights_df)
+        # fights_df = self.mirror_data(fights_df)
 
-        fights_df = self.encode_categorical(fights_df)
-        fights_df = self.scale_features(fights_df)
-        fights_df = self.remove_bias(fights_df)
+        # fights_df = self.encode_categorical(fights_df)
+        # fights_df = self.scale_features(fights_df)
+        # fights_df = self.remove_bias(fights_df)
 
         target = fights_df['result'].copy()
         
         if 'result' in fights_df.columns:
             fights_df = fights_df.drop(columns=['result'])
+
+        self._save_data(target)
         
         le = LabelEncoder()
         target = pd.Series(le.fit_transform(target.astype(str)), index=target.index)
@@ -433,19 +493,13 @@ def main():
     """
     Main function to demonstrate the usage of the UFCDataPreprocessor.
     """
-    preprocessor = UFCDataPreprocessor()
+    preprocessor = UFCFightsPreprocessor(output_dir='data/processed')
     
     try:
         # prepare data
         features_df, target, artifacts = preprocessor.prepare_data()
         
-        # save processed data
-        features_df.to_csv('processed_fights_features.csv', index=False)
-
-        target_df = pd.DataFrame({'result': target})
-        target_df.to_csv('processed_fights_target.csv', index=False)
-        
-        logger.info("Processed data saved to 'processed_fights_features.csv' and 'processed_fights_target.csv'")
+        logger.info("Data preprocessing completed successfully")
         
     except Exception as e:
         logger.error(f"Error during data preprocessing: {str(e)}")
