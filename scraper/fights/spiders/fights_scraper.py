@@ -14,12 +14,12 @@ from scraper.fights.extractors import (
     extract_strike_data
 )
 
-from scraper.fighters.extractors import extract_fights
+from scraper.fighters.extractors import extract_career_statistics, extract_fights, extract_physical_data
 
 LOGGER = logging.getLogger(__name__)
 
 # FOR TESTING, ONLY ONE PAGE
-TEST_RUN = False
+TEST_RUN = True
 
 MAX_CONCURRENT_REQUESTS = 5
 
@@ -139,6 +139,8 @@ class UFCFightsSpider:
                 'career_red_knockdowns_landed', 'career_red_knockdowns_absorbed', 'career_red_strikes_landed', 'career_red_strikes_absorbed',
                 'career_red_takedowns_landed', 'career_red_takedowns_absorbed', 'career_red_sub_attempts_landed', 'career_red_sub_attempts_absorbed',
                 'career_red_total_rounds', 'career_red_total_time_minutes', 'career_red_last_fight_date', 'career_red_last_win_date',
+                'career_red_SLpM', 'career_red_str_acc', 'career_red_SApM', 'career_red_str_def', 'career_red_td_avg', 'career_red_td_acc', 'career_red_td_def', 'career_red_sub_avg',
+                'career_red_height_cm', 'career_red_weight_kg', 'career_red_reach_cm', 'career_red_stance', 'career_red_date_of_birth',
                 'career_red_avg_knockdowns_landed', 'career_red_avg_knockdowns_absorbed', 'career_red_avg_strikes_landed', 'career_red_avg_strikes_absorbed',
                 'career_red_avg_takedowns_landed', 'career_red_avg_takedowns_absorbed', 'career_red_avg_submission_attempts_landed',
                 'career_red_avg_submission_attempts_absorbed', 'career_red_avg_fight_time_min',
@@ -149,6 +151,8 @@ class UFCFightsSpider:
                 'career_blue_knockdowns_landed', 'career_blue_knockdowns_absorbed', 'career_blue_strikes_landed', 'career_blue_strikes_absorbed',
                 'career_blue_takedowns_landed', 'career_blue_takedowns_absorbed', 'career_blue_sub_attempts_landed', 'career_blue_sub_attempts_absorbed',
                 'career_blue_total_rounds', 'career_blue_total_time_minutes', 'career_blue_last_fight_date', 'career_blue_last_win_date',
+                'career_blue_SLpM', 'career_blue_str_acc', 'career_blue_SApM', 'career_blue_str_def', 'career_blue_td_avg', 'career_blue_td_acc', 'career_blue_td_def', 'career_blue_sub_avg',
+                'career_blue_height_cm', 'career_blue_weight_kg', 'career_blue_reach_cm', 'career_blue_stance', 'career_blue_date_of_birth',
                 'career_blue_avg_knockdowns_landed', 'career_blue_avg_knockdowns_absorbed', 'career_blue_avg_strikes_landed', 'career_blue_avg_strikes_absorbed',
                 'career_blue_avg_takedowns_landed', 'career_blue_avg_takedowns_absorbed', 'career_blue_avg_submission_attempts_landed',
                 'career_blue_avg_submission_attempts_absorbed', 'career_blue_avg_fight_time_min',
@@ -370,8 +374,13 @@ class UFCFightsSpider:
         blue_soup = BeautifulSoup(blue_html, 'html.parser') if blue_html else None
 
         red_fighter_snapshot = extract_fights(red_soup, fight_date_limit)
-        blue_fighter_snapshot = extract_fights(blue_soup, fight_date_limit)
+        red_fighter_snapshot.update(extract_career_statistics(red_soup))
+        red_fighter_snapshot.update(extract_physical_data(red_soup))
         
+        blue_fighter_snapshot = extract_fights(blue_soup, fight_date_limit)
+        blue_fighter_snapshot.update(extract_career_statistics(blue_soup))
+        blue_fighter_snapshot.update(extract_physical_data(blue_soup))
+
         async with asyncio.Lock():
             self._save_fight_data(fight_id, event_data, fighters_data, fight_data, fight_total_stats, fight_strike_stats, red_fighter_snapshot, blue_fighter_snapshot)
 
@@ -805,6 +814,19 @@ class UFCFightsSpider:
                 red_fighter_snapshot['total_time_minutes'],
                 red_fighter_snapshot['last_fight_date'],
                 red_fighter_snapshot['last_win_date'],
+                red_fighter_snapshot['SLpM'],
+                red_fighter_snapshot['str_acc'],
+                red_fighter_snapshot['SApM'],
+                red_fighter_snapshot['str_def'],
+                red_fighter_snapshot['td_avg'],
+                red_fighter_snapshot['td_acc'],
+                red_fighter_snapshot['td_def'],
+                red_fighter_snapshot['sub_avg'],
+                red_fighter_snapshot['height_cm'],
+                red_fighter_snapshot['weight_kg'],
+                red_fighter_snapshot['reach_cm'],
+                red_fighter_snapshot['stance'],
+                red_fighter_snapshot['date_of_birth'],
                 red_avg_knockdowns_landed,
                 red_avg_knockdowns_absorbed,
                 red_avg_strikes_landed,
@@ -837,6 +859,19 @@ class UFCFightsSpider:
                 blue_fighter_snapshot['total_time_minutes'],
                 blue_fighter_snapshot['last_fight_date'],
                 blue_fighter_snapshot['last_win_date'],
+                blue_fighter_snapshot['SLpM'],  
+                blue_fighter_snapshot['str_acc'],
+                blue_fighter_snapshot['SApM'],
+                blue_fighter_snapshot['str_def'],
+                blue_fighter_snapshot['td_avg'],
+                blue_fighter_snapshot['td_acc'],
+                blue_fighter_snapshot['td_def'],
+                blue_fighter_snapshot['sub_avg'],
+                blue_fighter_snapshot['height_cm'],
+                blue_fighter_snapshot['weight_kg'],
+                blue_fighter_snapshot['reach_cm'],
+                blue_fighter_snapshot['stance'],
+                blue_fighter_snapshot['date_of_birth'],
                 blue_avg_knockdowns_landed,
                 blue_avg_knockdowns_absorbed,
                 blue_avg_strikes_landed,
