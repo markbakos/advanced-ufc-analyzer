@@ -178,7 +178,7 @@ class UFCFightsPreprocessor:
         logger.info("Handling missing values...")
 
         # create imputers for different types of features
-        numeric_imputer = SimpleImputer(strategy='median')
+        numeric_imputer = SimpleImputer(strategy='constant', fill_value=0)
         categorical_imputer = SimpleImputer(strategy='constant', fill_value='UNKNOWN')
         
         # separate numeric and categorical columns
@@ -260,7 +260,29 @@ class UFCFightsPreprocessor:
 
         return df_processed
     
-    def engineer_features(self, df: pd.DataFrame) -> pd.DataFrame:
+    def copy_fighter_stats(self, target_df: pd.DataFrame, fights_df: pd.DataFrame) -> pd.DataFrame:
+        """
+        Copy fighter stats from fights_df to target_df
+        """
+        logger.info("Copying fighter stats...")
+
+        columns = [
+                '_total_ufc_fights', '_wins_in_ufc', '_losses_in_ufc', '_draws_in_ufc',
+                '_wins_by_dec', '_losses_by_dec', '_wins_by_sub', '_losses_by_sub', '_wins_by_ko', '_losses_by_ko', 
+                '_knockdowns_landed', '_knockdowns_absorbed', '_strikes_landed', '_strikes_absorbed',
+                '_takedowns_landed', '_takedowns_absorbed', '_sub_attempts_landed', '_sub_attempts_absorbed', '_total_rounds',
+                '_total_time_minutes', '_avg_knockdowns_landed', '_avg_knockdowns_absorbed', '_avg_strikes_landed',
+                '_avg_strikes_absorbed', '_avg_takedowns_landed', '_avg_takedowns_absorbed','_avg_submission_attempts_landed',
+                '_avg_submission_attempts_absorbed', '_avg_fight_time_min', 
+            ]
+
+        for corner in ['red', 'blue']:
+            for col in columns:
+                target_df[f'{corner}{col}'] = fights_df[f'career_{corner}{col}']
+                
+        return target_df
+
+    def engineer_features(self, target_df: pd.DataFrame , fights_df: pd.DataFrame) -> pd.DataFrame:
         """
         Create new features for prediction
         
@@ -271,37 +293,23 @@ class UFCFightsPreprocessor:
             DataFrame with engineered features
         """
         logger.info("Engineering new features...")
-        
-        # create a copy of the dataframe to avoid modifying the original
-        df_processed = df.copy()
-        
+
         # calculate experience difference
-        df_processed['experience_diff'] = df_processed['career_red_total_ufc_fights'] - df_processed['career_blue_total_ufc_fights']
+        target_df['experience_diff'] = fights_df['career_red_total_ufc_fights'] - fights_df['career_blue_total_ufc_fights']
         
         # calculate striking efficiency
-        df_processed['red_strike_efficiency'] = df_processed['red_sig_strikes_landed'] / df_processed['red_sig_strikes_thrown'].where(df_processed['red_sig_strikes_thrown'] > 0, 1)
-        df_processed['blue_strike_efficiency'] = df_processed['blue_sig_strikes_landed'] / df_processed['blue_sig_strikes_thrown'].where(df_processed['blue_sig_strikes_thrown'] > 0, 1)
+        target_df['red_strike_efficiency'] = fights_df['red_sig_strikes_landed'] / fights_df['red_sig_strikes_thrown'].where(fights_df['red_sig_strikes_thrown'] > 0, 1)
+        target_df['blue_strike_efficiency'] = fights_df['blue_sig_strikes_landed'] / fights_df['blue_sig_strikes_thrown'].where(fights_df['blue_sig_strikes_thrown'] > 0, 1)
         
         # calculate takedown efficiency
-        df_processed['red_takedown_efficiency'] = df_processed['red_takedowns_landed'] / df_processed['red_takedowns_attempted'].where(df_processed['red_takedowns_attempted'] > 0, 1)
-        df_processed['blue_takedown_efficiency'] = df_processed['blue_takedowns_landed'] / df_processed['blue_takedowns_attempted'].where(df_processed['blue_takedowns_attempted'] > 0, 1)
+        target_df['red_takedown_efficiency'] = fights_df['red_takedowns_landed'] / fights_df['red_takedowns_attempted'].where(fights_df['red_takedowns_attempted'] > 0, 1)
+        target_df['blue_takedown_efficiency'] = fights_df['blue_takedowns_landed'] / fights_df['blue_takedowns_attempted'].where(fights_df['blue_takedowns_attempted'] > 0, 1)
         
         # calculate win rate differences
-        df_processed['win_rate_diff'] = (df_processed['career_red_wins_in_ufc'] / df_processed['career_red_total_ufc_fights'].where(df_processed['career_red_total_ufc_fights'] > 0, 1)) - \
-                             (df_processed['career_blue_wins_in_ufc'] / df_processed['career_blue_total_ufc_fights'].where(df_processed['career_blue_total_ufc_fights'] > 0, 1))
+        target_df['win_rate_diff'] = (fights_df['career_red_wins_in_ufc'] / fights_df['career_red_total_ufc_fights'].where(fights_df['career_red_total_ufc_fights'] > 0, 1)) - \
+                             (fights_df['career_blue_wins_in_ufc'] / fights_df['career_blue_total_ufc_fights'].where(fights_df['career_blue_total_ufc_fights'] > 0, 1))
         
-        # calculate round-specific efficiencies
-        for fighter in ['red', 'blue']:
-            for round_num in range(1, 6):
-                if f'{fighter}_sig_strikes_thrown_rd{round_num}' in df_processed.columns:
-                    df_processed[f'{fighter}_strike_efficiency_rd{round_num}'] = df_processed[f'{fighter}_sig_strikes_landed_rd{round_num}'] / \
-                        df_processed[f'{fighter}_sig_strikes_thrown_rd{round_num}'].where(df_processed[f'{fighter}_sig_strikes_thrown_rd{round_num}'] > 0, 1)
-                
-                if f'{fighter}_takedowns_attempted_rd{round_num}' in df_processed.columns:
-                    df_processed[f'{fighter}_takedown_efficiency_rd{round_num}'] = df_processed[f'{fighter}_takedowns_landed_rd{round_num}'] / \
-                        df_processed[f'{fighter}_takedowns_attempted_rd{round_num}'].where(df_processed[f'{fighter}_takedowns_attempted_rd{round_num}'] > 0, 1)
-        
-        return df_processed
+        return target_df
     
     def encode_categorical(self, df: pd.DataFrame) -> pd.DataFrame:
         """
@@ -373,40 +381,6 @@ class UFCFightsPreprocessor:
         
         return df
     
-    def remove_bias(self, df: pd.DataFrame) -> pd.DataFrame:
-        """
-        remove sources of bias from the dataset
-        
-        Args:
-            df: Input DataFrame
-            
-        Returns:
-            DataFrame with reduced bias
-        """
-        logger.info("Removing potential sources of bias...")
-        
-        # remove info that shouldn't affect outcome
-        bias_columns = [
-            'fight_id',
-            'event_name',
-            'event_date',
-            'total_rounds',
-            'updated_timestamp',
-            'career_red_last_fight_date',
-            'career_blue_last_fight_date',
-            'career_red_last_win_date',
-            'career_blue_last_win_date',
-            'red_fighter_id',
-            'blue_fighter_id',
-            'red_fighter_name',
-            'blue_fighter_name',
-            'round'
-        ]
-        
-        df = df.drop(columns=[col for col in bias_columns if col in df.columns])
-        
-        return df
-
     def mirror_data(self, df: pd.DataFrame) -> pd.DataFrame:
         """
         Mirror the data to create a balanced dataset
@@ -448,14 +422,18 @@ class UFCFightsPreprocessor:
         
         # load data
         fights_df = self.load_data()
+
+        fights_df = self.handle_missing_values(fights_df)
+
+        self.output_df = pd.DataFrame({'total_rounds': fights_df['total_rounds']})
         
-        self.output_df = fights_df[['fight_id']].copy()
+        self.output_df = self.copy_fighter_stats(self.output_df, fights_df)
+        self.output_df = self.engineer_features(self.output_df, fights_df)
         
         # # handle round data first to avoid issues with missing values
         # fights_df = self.handle_round_data(fights_df)
         
         # # apply preprocessing steps
-        # fights_df = self.handle_missing_values(fights_df)
         # fights_df = self.calculate_days_since(fights_df)
         # fights_df = self.handle_time_columns(fights_df)
         # fights_df = self.engineer_features(fights_df)
