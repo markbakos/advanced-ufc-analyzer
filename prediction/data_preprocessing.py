@@ -273,13 +273,32 @@ class UFCFightsPreprocessor:
                 '_takedowns_landed', '_takedowns_absorbed', '_sub_attempts_landed', '_sub_attempts_absorbed', '_total_rounds',
                 '_total_time_minutes', '_avg_knockdowns_landed', '_avg_knockdowns_absorbed', '_avg_strikes_landed',
                 '_avg_strikes_absorbed', '_avg_takedowns_landed', '_avg_takedowns_absorbed','_avg_submission_attempts_landed',
-                '_avg_submission_attempts_absorbed', '_avg_fight_time_min', 
+                '_avg_submission_attempts_absorbed', '_avg_fight_time_min', '_last_fight_days_since'
             ]
 
         for corner in ['red', 'blue']:
             for col in columns:
                 target_df[f'{corner}{col}'] = fights_df[f'career_{corner}{col}']
-                
+
+        return target_df
+    
+    def calculate_career_stats(self, target_df: pd.DataFrame, fight_df: pd.DataFrame) -> pd.DataFrame:
+        """
+        Calculate per minute and per round career stats
+        """
+
+        logger.info("Calculating fighter career stats...")
+
+        columns = [
+            'knockdowns_landed', 'knockdowns_absorbed', 'strikes_landed', 'strikes_absorbed',
+            'takedowns_landed', 'takedowns_absorbed', 'sub_attempts_landed', 'sub_attempts_absorbed',
+        ]
+
+        for corner in ['red', 'blue']:
+            for col in columns:
+                target_df[f'{corner}_{col}_per_minute'] = fight_df[f'career_{corner}_{col}'] / fight_df[f'career_{corner}_total_time_minutes'].where(fight_df[f'career_{corner}_total_time_minutes'] > 0, 1)
+                target_df[f'{corner}_{col}_per_round'] = fight_df[f'career_{corner}_{col}'] / fight_df[f'career_{corner}_total_rounds'].where(fight_df[f'career_{corner}_total_rounds'] > 0, 1)
+
         return target_df
 
     def engineer_features(self, target_df: pd.DataFrame , fights_df: pd.DataFrame) -> pd.DataFrame:
@@ -423,19 +442,21 @@ class UFCFightsPreprocessor:
         # load data
         fights_df = self.load_data()
 
+        #preprocess fights dataframe first
         fights_df = self.handle_missing_values(fights_df)
+        fights_df = self.calculate_days_since(fights_df)
+        fights_df = self.handle_time_columns(fights_df)
 
         self.output_df = pd.DataFrame({'total_rounds': fights_df['total_rounds']})
         
         self.output_df = self.copy_fighter_stats(self.output_df, fights_df)
+        self.output_df = self.calculate_career_stats(self.output_df, fights_df)
         self.output_df = self.engineer_features(self.output_df, fights_df)
         
         # # handle round data first to avoid issues with missing values
         # fights_df = self.handle_round_data(fights_df)
         
         # # apply preprocessing steps
-        # fights_df = self.calculate_days_since(fights_df)
-        # fights_df = self.handle_time_columns(fights_df)
         # fights_df = self.engineer_features(fights_df)
 
         # mirror data
