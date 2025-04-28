@@ -405,7 +405,7 @@ def extract_fights(soup: BeautifulSoup, fight_date_limit : Optional[datetime.dat
 
         # calculate total fight time in minutes
         minutes, seconds = map(int, time_str.split(':'))
-        total_minutes = round_num * 5 + minutes + seconds//60
+        total_minutes = (round_num-1) * 5 + minutes + (seconds//60)
         fighter_stats['total_time_minutes'] += total_minutes
 
     return fighter_stats
