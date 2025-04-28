@@ -1,8 +1,11 @@
+import datetime
+import json
+
 import pandas as pd
 import numpy as np
 from sklearn.preprocessing import StandardScaler, LabelEncoder
 from sklearn.impute import SimpleImputer
-from typing import Tuple, Dict, Any
+from typing import Tuple, Dict, Any, List
 import logging
 import os
 
@@ -282,24 +285,42 @@ class UFCFightsPreprocessor:
 
         return target_df
 
-    def _get_all_fight_ids(self, target_df: pd.DataFrame, fight_df: pd.DataFrame, fighter_id: str) -> pd.DataFrame:
+    def get_all_fight_ids(self, fight_df: pd.DataFrame) -> Dict[str, List[Tuple[str, str, datetime.datetime]]]:
         """
-        Gets all fight ids and corner with specific fighter_id
+        Saves all fight ids for each fighter
+
+        Returns:
+            Dictionary with fighter id, List of Tuples (fight_id, corner (red/blue), event date)
         """
 
-        # get all fight_id for fighter_id
-        fights = {}
+        fighter_history = {}
 
-        for fight_id in fight_df['fight_id'].unique():
-            fight_data = fight_df[fight_df['fight_id'] == fight_id]
-            if fighter_id in fight_data['red_fighter_id'].values:
-                fights[fight_id] = 'red'
-            elif fighter_id in fight_data['blue_fighter_id'].values:
-                fights[fight_id] = 'blue'
+        fight_df['event_date'] = pd.to_datetime(fight_df['event_date'])
 
-        logger.info(fights)
+        for idx, row in fight_df.iterrows():
+            fight_id = row['fight_id']
+            fight_date = row['event_date']
 
-        return target_df
+            red_fighter = row['red_fighter_id']
+            if red_fighter not in fighter_history:
+                fighter_history[red_fighter] = []
+            fighter_history[red_fighter].append((fight_id, 'red', fight_date))
+
+            blue_fighter = row['blue_fighter_id']
+            if blue_fighter not in fighter_history:
+                fighter_history[blue_fighter] = []
+            fighter_history[blue_fighter].append((fight_id, 'blue', fight_date))
+
+        # for saving to json output
+        # with open('data/fighter_histories.json', 'w') as f:
+        #     json_history = {
+        #         fighter_id: [(fid, corner, date.strftime('%Y-%m-%d'))
+        #                      for fid, corner, date in history]
+        #         for fighter_id, history in fighter_history.items()
+        #     }
+        #     json.dump(json_history, f)
+
+        return fighter_history
     
     def calculate_career_stats(self, target_df: pd.DataFrame, fight_df: pd.DataFrame) -> pd.DataFrame:
         """
@@ -467,6 +488,9 @@ class UFCFightsPreprocessor:
         fights_df = self.handle_missing_values(fights_df)
         fights_df = self.calculate_days_since(fights_df)
         fights_df = self.handle_time_columns(fights_df)
+
+        # get all fight ids for each fighter
+        fighter_history = self.get_all_fight_ids(fights_df)
 
         self.output_df = pd.DataFrame({'total_rounds': fights_df['total_rounds']})
         
