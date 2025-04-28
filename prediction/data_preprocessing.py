@@ -281,6 +281,25 @@ class UFCFightsPreprocessor:
                 target_df[f'{corner}{col}'] = fights_df[f'career_{corner}{col}']
 
         return target_df
+
+    def _get_all_fight_ids(self, target_df: pd.DataFrame, fight_df: pd.DataFrame, fighter_id: str) -> pd.DataFrame:
+        """
+        Gets all fight ids and corner with specific fighter_id
+        """
+
+        # get all fight_id for fighter_id
+        fights = {}
+
+        for fight_id in fight_df['fight_id'].unique():
+            fight_data = fight_df[fight_df['fight_id'] == fight_id]
+            if fighter_id in fight_data['red_fighter_id'].values:
+                fights[fight_id] = 'red'
+            elif fighter_id in fight_data['blue_fighter_id'].values:
+                fights[fight_id] = 'blue'
+
+        logger.info(fights)
+
+        return target_df
     
     def calculate_career_stats(self, target_df: pd.DataFrame, fight_df: pd.DataFrame) -> pd.DataFrame:
         """
@@ -298,6 +317,8 @@ class UFCFightsPreprocessor:
             for col in columns:
                 target_df[f'{corner}_{col}_per_minute'] = fight_df[f'career_{corner}_{col}'] / fight_df[f'career_{corner}_total_time_minutes'].where(fight_df[f'career_{corner}_total_time_minutes'] > 0, 1)
                 target_df[f'{corner}_{col}_per_round'] = fight_df[f'career_{corner}_{col}'] / fight_df[f'career_{corner}_total_rounds'].where(fight_df[f'career_{corner}_total_rounds'] > 0, 1)
+
+            # target_df[f'{corner}_striking_accuracy'] = fight_df[f'career_{corner}_strikes_landed'] / fight_df[f'career_{corner}_strikes_thrown'].where(fight_df[f'career_{corner}_strikes_thrown'] > 0, 1)
 
         return target_df
 
