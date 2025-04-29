@@ -345,6 +345,26 @@ class UFCFightsPreprocessor:
         """
         logger.info("Getting all strike data...")
 
+        strike_columns = {
+            'head_strikes_landed': 0,
+            'head_strikes_thrown': 0,
+            'body_strikes_landed': 0,
+            'body_strikes_thrown': 0,
+            'leg_strikes_landed': 0,
+            'leg_strikes_thrown': 0,
+            'distance_strikes_landed': 0,
+            'distance_strikes_thrown': 0,
+            'clinch_strikes_landed': 0,
+            'clinch_strikes_thrown': 0,
+            'ground_strikes_landed': 0,
+            'ground_strikes_thrown': 0,
+        }
+
+        # pre initialize all columns in target_df
+        for corner in ['red', 'blue']:
+            for column in strike_columns:
+                target_df[f'{corner}_{column}'] = 0
+
         for idx, fight in fight_df.iterrows():
 
             # test:
@@ -358,16 +378,21 @@ class UFCFightsPreprocessor:
             blue_fights = self._get_fights_date_limited(fight['blue_fighter_id'], fight_date)
 
             # get red fighter stats
-            red_fighter_strikes = {
-                'total_head_strikes_landed': 0,
-                'total_head_strikes_thrown': 0,
-            }
+            red_fighter_strikes = strike_columns.copy()
+            blue_fighter_strikes = strike_columns.copy()
 
             for fight_id, corner in red_fights:
-                red_fighter_strikes['total_head_strikes_landed'] += fight_df.loc[fight_df['fight_id'] == fight_id, 'red_head_strikes_landed'].values[0]
-                red_fighter_strikes['total_head_strikes_thrown'] += fight_df.loc[fight_df['fight_id'] == fight_id, 'red_head_strikes_thrown'].values[0]
+                for column in strike_columns:
+                    red_fighter_strikes[column] += fight_df.loc[fight_df['fight_id'] == fight_id, f'red_{column}'].values[0]
 
-            target_df.at[idx, 'red_total_head_strikes_landed'] = red_fighter_strikes['total_head_strikes_landed']
+            for fight_id, corner in blue_fights:
+                for column in strike_columns:
+                    blue_fighter_strikes[column] += fight_df.loc[fight_df['fight_id'] == fight_id, f'blue_{column}'].values[0]
+
+            # ignore performance warnings this is necessary
+            for column in strike_columns:
+                    target_df.at[idx, f'red_{column}'] = red_fighter_strikes[column]
+                    target_df.at[idx, f'blue_{column}'] = blue_fighter_strikes[column]
 
             if idx % 100 == 0:
                 logger.info(f"Processed {idx} fights...")
