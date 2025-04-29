@@ -321,6 +321,14 @@ class UFCFightsPreprocessor:
         #     json.dump(json_history, f)
 
         return fighter_history
+
+    def _get_fights_date_limited(self, fight_history: Dict[str, List[Tuple[str, str, datetime.datetime]]], fighter_id: str, date_limit: datetime.datetime) -> List[Tuple[str, str]]:
+        if fighter_id not in fight_history:
+            return []
+
+        fights = fight_history[fighter_id]
+
+        return [(fid, corner) for fid, corner, date in fights if date < date_limit]
     
     def calculate_career_stats(self, target_df: pd.DataFrame, fight_df: pd.DataFrame) -> pd.DataFrame:
         """
@@ -491,6 +499,10 @@ class UFCFightsPreprocessor:
 
         # get all fight ids for each fighter
         fighter_history = self.get_all_fight_ids(fights_df)
+
+        # test:
+        # fights = self._get_fights_date_limited(fighter_history, 'e1248941344b3288', datetime.datetime.strptime('2025-04-12', '%Y-%m-%d'))
+        # print(fights)
 
         self.output_df = pd.DataFrame({'total_rounds': fights_df['total_rounds']})
         
