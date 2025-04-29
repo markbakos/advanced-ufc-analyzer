@@ -35,6 +35,8 @@ class UFCFightsPreprocessor:
         self.output_file = 'processed_fights_features.csv'
         self.output_df = pd.DataFrame()
 
+        self.fight_history = {}
+
     def load_data(self) -> pd.DataFrame:
         """
         Load the data from the CSV files
@@ -322,13 +324,55 @@ class UFCFightsPreprocessor:
 
         return fighter_history
 
-    def _get_fights_date_limited(self, fight_history: Dict[str, List[Tuple[str, str, datetime.datetime]]], fighter_id: str, date_limit: datetime.datetime) -> List[Tuple[str, str]]:
-        if fighter_id not in fight_history:
+    def _get_fights_date_limited(self, fighter_id: str, date_limit: datetime.datetime) -> List[Tuple[str, str]]:
+        """
+        Get all fight ids for fighter limited with max date
+
+        :param fighter_id: Fighter ID to get fights for
+        :param date_limit: Maximum date to limit the fights (Date NOT included)
+        :return: List of Tuples (fight_id, corner)
+        """
+        if fighter_id not in self.fight_history:
             return []
 
-        fights = fight_history[fighter_id]
+        fights = self.fight_history[fighter_id]
 
         return [(fid, corner) for fid, corner, date in fights if date < date_limit]
+
+    def get_all_strike_data(self, target_df: pd.DataFrame, fight_df: pd.DataFrame) -> pd.DataFrame:
+        """
+        Updates dataframe with all strike data for all fights
+        """
+        logger.info("Getting all strike data...")
+
+        for idx, fight in fight_df.iterrows():
+
+            # test:
+            # if fight['fight_id'] == "d3be5a4e0ec273e2":
+            #     print("True" if fight['red_fighter_id'] == "cbf5e6f231b55443" else "False")
+
+            fight_date = pd.to_datetime(fight['event_date'])
+
+            # get all previous fights for both fighter
+            red_fights = self._get_fights_date_limited(fight['red_fighter_id'], fight_date)
+            blue_fights = self._get_fights_date_limited(fight['blue_fighter_id'], fight_date)
+
+            # get red fighter stats
+            red_fighter_strikes = {
+                'total_head_strikes_landed': 0,
+                'total_head_strikes_thrown': 0,
+            }
+
+            for fight_id, corner in red_fights:
+                red_fighter_strikes['total_head_strikes_landed'] += fight_df.loc[fight_df['fight_id'] == fight_id, 'red_head_strikes_landed'].values[0]
+                red_fighter_strikes['total_head_strikes_thrown'] += fight_df.loc[fight_df['fight_id'] == fight_id, 'red_head_strikes_thrown'].values[0]
+
+            target_df.at[idx, 'red_total_head_strikes_landed'] = red_fighter_strikes['total_head_strikes_landed']
+
+            if idx % 100 == 0:
+                logger.info(f"Processed {idx} fights...")
+
+        return target_df
     
     def calculate_career_stats(self, target_df: pd.DataFrame, fight_df: pd.DataFrame) -> pd.DataFrame:
         """
@@ -498,7 +542,7 @@ class UFCFightsPreprocessor:
         fights_df = self.handle_time_columns(fights_df)
 
         # get all fight ids for each fighter
-        fighter_history = self.get_all_fight_ids(fights_df)
+        self.fight_history = self.get_all_fight_ids(fights_df)
 
         # test:
         # fights = self._get_fights_date_limited(fighter_history, 'e1248941344b3288', datetime.datetime.strptime('2025-04-12', '%Y-%m-%d'))
@@ -508,6 +552,7 @@ class UFCFightsPreprocessor:
         
         self.output_df = self.copy_fighter_stats(self.output_df, fights_df)
         self.output_df = self.calculate_career_stats(self.output_df, fights_df)
+        self.output_df = self.get_all_strike_data(self.output_df, fights_df)
         self.output_df = self.engineer_features(self.output_df, fights_df)
         
         # # handle round data first to avoid issues with missing values
