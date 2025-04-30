@@ -452,32 +452,6 @@ class UFCFightsPreprocessor:
         
         return target_df
     
-    def encode_categorical(self, df: pd.DataFrame) -> pd.DataFrame:
-        """
-        Encode categorical variables using label encoding
-        
-        Args:
-            df: Input DataFrame
-            
-        Returns:
-            DataFrame with encoded categorical variables
-        """
-        logger.info("Encoding categorical variables...")
-        
-        categorical_columns = [
-            'location',
-            'win_method',
-            'referee'
-        ]
-        
-        for col in categorical_columns:
-            if col in df.columns:
-                le = LabelEncoder()
-                df[col] = le.fit_transform(df[col].astype(str))
-                self.label_encoders[col] = le
-        
-        return df
-    
     def scale_features(self, df: pd.DataFrame) -> pd.DataFrame:
         """
         Scale numerical features using StandardScaler
