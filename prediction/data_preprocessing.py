@@ -358,15 +358,18 @@ class UFCFightsPreprocessor:
             red_fights = self._get_fights_date_limited(fight['red_fighter_id'], fight_date)
             blue_fights = self._get_fights_date_limited(fight['blue_fighter_id'], fight_date)
 
+            # initialize red and blue fighters columns
             red_fighter_strikes = strike_columns.copy()
             blue_fighter_strikes = strike_columns.copy()
 
+            # add opponent columns
             for column in strike_columns:
                 red_fighter_strikes.update({f"{column}_opponent": 0})
 
             for column in strike_columns:
                 blue_fighter_strikes.update({f"{column}_opponent": 0})
 
+            # get all strikes for red fighter using previous red_fights
             for fight_id, corner in red_fights:
                 for column in strike_columns:
                     red_fighter_strikes[column] += fight_df.loc[fight_df['fight_id'] == fight_id, f'{corner}_{column}'].values[0]
@@ -374,6 +377,7 @@ class UFCFightsPreprocessor:
                 for column in strike_columns:
                     red_fighter_strikes[f'{column}_opponent'] += fight_df.loc[fight_df['fight_id'] == fight_id, f'{opponent_corner[corner]}_{column}'].values[0]
 
+            # same for blue
             for fight_id, corner in blue_fights:
                 for column in strike_columns:
                     blue_fighter_strikes[column] += fight_df.loc[fight_df['fight_id'] == fight_id, f'{corner}_{column}'].values[0]
@@ -400,7 +404,7 @@ class UFCFightsPreprocessor:
 
             if idx % 100 == 0 and idx > 0:
                 logger.info(f"Processed {idx} fights...")
-                return target_df
+                # return target_df
 
         return target_df
     
