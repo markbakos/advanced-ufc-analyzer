@@ -72,32 +72,6 @@ class UFCFightsPreprocessor:
         logger.info(f"Processed features saved to {features_file}")
         logger.info(f"Target values saved to {target_file}")
 
-    # #             fight metadata
-    #             'total_rounds',
-                
-    #             #red fighter
-    #             'red_total_ufc_fights', 'red_wins_in_ufc', 'red_losses_in_ufc', 'red_draws_in_ufc',
-    #             'red_wins_by_dec', 'red_losses_by_dec', 'red_wins_by_sub', 'red_losses_by_sub', 'red_wins_by_ko', 'red_losses_by_ko', 
-    #             'red_knockdowns_landed', 'red_knockdowns_absorbed', 'red_total_strikes_landed', 'red_total_strikes_absorbed',
-    #             'red_takedowns_landed', 'red_takedowns_absorbed', 'red_sub_attempts_landed', 'red_sub_attempts_absorbed', 'red_total_rounds',
-    #             'red_total_time_minutes', 'red_avg_knockdowns_landed', 'red_avg_knockdowns_absorbed', 'red_avg_strikes_landed',
-    #             'red_avg_strikes_absorbed', 'red_avg_takedowns_landed', 'red_avg_takedowns_absorbed','red_avg_submission_attempts_landed',
-    #             'red_avg_submission_attempts_absorbed', 'red_avg_fight_time_min',
-
-    #             'red_last_fight_days_since', 'red_last_win_days_since',
-
-    #             #blue fighter
-    #             'blue_total_ufc_fights', 'blue_wins_in_ufc', 'blue_losses_in_ufc', 'blue_draws_in_ufc',
-    #             'blue_wins_by_dec', 'blue_losses_by_dec', 'blue_wins_by_sub', 'blue_losses_by_sub', 'blue_wins_by_ko', 'blue_losses_by_ko', 
-    #             'blue_knockdowns_landed', 'blue_knockdowns_absorbed', 'blue_total_strikes_landed', 'blue_total_strikes_absorbed',
-    #             'blue_significant_strikes_landed', 'blue_significant_strikes_absorbed', 'blue_takedowns_landed',
-    #             'blue_takedowns_absorbed', 'blue_sub_attempts_landed', 'blue_sub_attempts_absorbed', 'blue_total_rounds',
-    #             'blue_total_time_minutes', 'blue_avg_knockdowns_landed', 'blue_avg_knockdowns_absorbed', 'blue_avg_strikes_landed',
-    #             'blue_avg_strikes_absorbed', 'blue_avg_takedowns_landed', 'blue_avg_takedowns_absorbed', 'blue_avg_submission_attempts_landed',
-    #             'blue_avg_submission_attempts_absorbed', 'blue_avg_fight_time_min',
-
-    #             'blue_last_fight_days_since', 'blue_last_win_days_since',
-
     def calculate_days_since(self, df: pd.DataFrame) -> pd.DataFrame:
         """
         Calculate days since last fight and last win and handles date columns
@@ -360,10 +334,13 @@ class UFCFightsPreprocessor:
             'ground_strikes_thrown': 0,
         }
 
+
         # pre initialize all columns in target_df
         for corner in ['red', 'blue']:
             for column in strike_columns:
                 target_df[f'{corner}_{column}'] = 0
+            for column in strike_columns:
+                target_df[f'{corner}_{column}_opponent'] = 0
 
         for idx, fight in fight_df.iterrows():
 
@@ -381,21 +358,47 @@ class UFCFightsPreprocessor:
             red_fighter_strikes = strike_columns.copy()
             blue_fighter_strikes = strike_columns.copy()
 
+            for column in strike_columns:
+                red_fighter_strikes.update({f"{column}_opponent": 0})
+
+            for column in strike_columns:
+                blue_fighter_strikes.update({f"{column}_opponent": 0})
+
             for fight_id, corner in red_fights:
                 for column in strike_columns:
                     red_fighter_strikes[column] += fight_df.loc[fight_df['fight_id'] == fight_id, f'red_{column}'].values[0]
+
+                for column in strike_columns:
+                    red_fighter_strikes[f'{column}_opponent'] += fight_df.loc[fight_df['fight_id'] == fight_id, f'blue_{column}'].values[0]
 
             for fight_id, corner in blue_fights:
                 for column in strike_columns:
                     blue_fighter_strikes[column] += fight_df.loc[fight_df['fight_id'] == fight_id, f'blue_{column}'].values[0]
 
+                for column in strike_columns:
+                    blue_fighter_strikes[f'{column}_opponent'] += fight_df.loc[fight_df['fight_id'] == fight_id, f'red_{column}'].values[0]
+
             # ignore performance warnings this is necessary
             for column in strike_columns:
                     target_df.at[idx, f'red_{column}'] = red_fighter_strikes[column]
+
+            for column in strike_columns:
+                target_df.at[idx, f'red_{column}_opponent'] = red_fighter_strikes[f'{column}_opponent']
+
+            for column in strike_columns:
                     target_df.at[idx, f'blue_{column}'] = blue_fighter_strikes[column]
 
-            if idx % 100 == 0:
+            for column in strike_columns:
+                target_df.at[idx, f'blue_{column}_opponent'] = blue_fighter_strikes[f'{column}_opponent']
+
+            if fight['fight_id'] == "d3be5a4e0ec273e2":
+                print(f"Red fighter: {red_fighter_strikes}")
+                print(f"Blue fighter: {blue_fighter_strikes}")
+
+            if idx % 100 == 0 and idx > 0:
                 logger.info(f"Processed {idx} fights...")
+                return target_df
+
 
         return target_df
     
