@@ -390,14 +390,14 @@ class UFCFightsPreprocessor:
 
             for column in strike_columns:
                 target_df.at[idx, f'blue_{column}_opponent'] = blue_fighter_strikes[f'{column}_opponent']
-
-            if fight['fight_id'] == "d3be5a4e0ec273e2":
-                print(f"Red fighter: {red_fighter_strikes}")
-                print(f"Blue fighter: {blue_fighter_strikes}")
+            #
+            # if fight['fight_id'] == "d3be5a4e0ec273e2":
+            #     print(f"Red fighter: {red_fighter_strikes}")
+            #     print(f"Blue fighter: {blue_fighter_strikes}")
 
             if idx % 100 == 0 and idx > 0:
                 logger.info(f"Processed {idx} fights...")
-                return target_df
+                # return target_df
 
 
         return target_df
