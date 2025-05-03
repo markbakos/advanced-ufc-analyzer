@@ -489,6 +489,41 @@ class UFCFightsPreprocessor:
         target_df['clinch_strike_diff'] = fights_df['red_clinch_strikes_landed'] - fights_df['blue_clinch_strikes_landed']
         target_df['ground_strike_diff'] = fights_df['red_ground_strikes_landed'] - fights_df['blue_ground_strikes_landed']
 
+        # strike accuracy
+        for corner in ['red', 'blue']:
+            # head strike accuracy
+            target_df[f'{corner}_head_strike_accuracy'] = fights_df[f'{corner}_head_strikes_landed'] / fights_df[
+                f'{corner}_head_strikes_thrown'].where(fights_df[f'{corner}_head_strikes_thrown'] > 0, 1)
+
+            # body strike accuracy
+            target_df[f'{corner}_body_strike_accuracy'] = fights_df[f'{corner}_body_strikes_landed'] / fights_df[
+                f'{corner}_body_strikes_thrown'].where(fights_df[f'{corner}_body_strikes_thrown'] > 0, 1)
+
+            # leg strike accuracy
+            target_df[f'{corner}_leg_strike_accuracy'] = fights_df[f'{corner}_leg_strikes_landed'] / fights_df[
+                f'{corner}_leg_strikes_thrown'].where(fights_df[f'{corner}_leg_strikes_thrown'] > 0, 1)
+
+            # distance strikes
+            target_df[f'{corner}_distance_strike_accuracy'] = fights_df[f'{corner}_distance_strikes_landed'] / \
+                                                              fights_df[f'{corner}_distance_strikes_thrown'].where(
+                                                                  fights_df[f'{corner}_distance_strikes_thrown'] > 0, 1)
+
+            # clinch strike accuracy
+            target_df[f'{corner}_clinch_strike_accuracy'] = fights_df[f'{corner}_clinch_strikes_landed'] / fights_df[
+                f'{corner}_clinch_strikes_thrown'].where(fights_df[f'{corner}_clinch_strikes_thrown'] > 0, 1)
+
+            # ground strikes accuracy
+            target_df[f'{corner}_ground_strike_accuracy'] = fights_df[f'{corner}_ground_strikes_landed'] / fights_df[
+                f'{corner}_ground_strikes_thrown'].where(fights_df[f'{corner}_ground_strikes_thrown'] > 0, 1)
+
+        # accuracy differentials
+        target_df['head_accuracy_diff'] = target_df['red_head_strike_accuracy'] - target_df['blue_head_strike_accuracy']
+        target_df['body_accuracy_diff'] = target_df['red_body_strike_accuracy'] - target_df['blue_body_strike_accuracy']
+        target_df['leg_accuracy_diff'] = target_df['red_leg_strike_accuracy'] - target_df['blue_leg_strike_accuracy']
+        target_df['distance_accuracy_diff'] = target_df['red_distance_strike_accuracy'] - target_df['blue_distance_strike_accuracy']
+        target_df['clinch_accuracy_diff'] = target_df['red_clinch_strike_accuracy'] - target_df['blue_clinch_strike_accuracy']
+        target_df['ground_accuracy_diff'] = target_df['red_ground_strike_accuracy'] - target_df['blue_ground_strike_accuracy']
+
         # calculate win rate differences
         target_df['win_rate_diff'] = (fights_df['career_red_wins_in_ufc'] / fights_df['career_red_total_ufc_fights'].where(fights_df['career_red_total_ufc_fights'] > 0, 1)) - \
                              (fights_df['career_blue_wins_in_ufc'] / fights_df['career_blue_total_ufc_fights'].where(fights_df['career_blue_total_ufc_fights'] > 0, 1))
