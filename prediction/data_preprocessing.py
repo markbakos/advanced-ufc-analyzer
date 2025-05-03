@@ -437,7 +437,7 @@ class UFCFightsPreprocessor:
                 target_df[f'{corner}_{col}_per_minute'] = fight_df[f'career_{corner}_{col}'] / fight_df[f'career_{corner}_total_time_minutes'].where(fight_df[f'career_{corner}_total_time_minutes'] > 0, 1)
                 target_df[f'{corner}_{col}_per_round'] = fight_df[f'career_{corner}_{col}'] / fight_df[f'career_{corner}_total_rounds'].where(fight_df[f'career_{corner}_total_rounds'] > 0, 1)
 
-            # target_df[f'{corner}_striking_accuracy'] = fight_df[f'career_{corner}_strikes_landed'] / fight_df[f'career_{corner}_strikes_thrown'].where(fight_df[f'career_{corner}_strikes_thrown'] > 0, 1)
+            # target_df[f'{corner}_striking_accuracy'] = fight_df[f'career_{corner}202_strikes_landed'] / fight_df[f'career_{corner}_strikes_thrown'].where(fight_df[f'career_{corner}_strikes_thrown'] > 0, 1)
 
         return target_df
 
@@ -453,21 +453,46 @@ class UFCFightsPreprocessor:
         """
         logger.info("Engineering new features...")
 
+        #
+        # basic differences and efficiencies
+        #
+
         # calculate experience difference
         target_df['experience_diff'] = fights_df['career_red_total_ufc_fights'] - fights_df['career_blue_total_ufc_fights']
         
         # calculate striking efficiency
         target_df['red_strike_efficiency'] = fights_df['red_sig_strikes_landed'] / fights_df['red_sig_strikes_thrown'].where(fights_df['red_sig_strikes_thrown'] > 0, 1)
         target_df['blue_strike_efficiency'] = fights_df['blue_sig_strikes_landed'] / fights_df['blue_sig_strikes_thrown'].where(fights_df['blue_sig_strikes_thrown'] > 0, 1)
-        
+        target_df['strike_efficiency_diff'] = target_df['red_strike_efficiency'] - target_df['blue_strike_efficiency']
+
         # calculate takedown efficiency
         target_df['red_takedown_efficiency'] = fights_df['red_takedowns_landed'] / fights_df['red_takedowns_attempted'].where(fights_df['red_takedowns_attempted'] > 0, 1)
         target_df['blue_takedown_efficiency'] = fights_df['blue_takedowns_landed'] / fights_df['blue_takedowns_attempted'].where(fights_df['blue_takedowns_attempted'] > 0, 1)
-        
+        target_df['takedown_efficiency_diff'] = target_df['red_takedown_efficiency'] - target_df['blue_takedown_efficiency']
+
+        #
+        # striking differentials from here:
+        #
+
+        # total strikes, per round, per minute
+        target_df['total_strike_diff'] = fights_df['red_total_strikes_landed'] - fights_df['blue_total_strikes_landed']
+        target_df['total_strike_diff_per_round'] = target_df['red_strikes_landed_per_round'] - target_df['blue_strikes_landed_per_round']
+        target_df['total_strike_diff_per_minute'] = target_df['red_strikes_landed_per_minute'] - target_df['blue_strikes_landed_per_minute']
+
+        # location differentials
+        target_df['total_head_strike_diff'] = fights_df['red_head_strikes_landed'] - fights_df['blue_head_strikes_landed']
+        target_df['total_body_strike_diff'] = fights_df['red_body_strikes_landed'] - fights_df['blue_body_strikes_landed']
+        target_df['total_leg_strike_diff'] = fights_df['red_leg_strikes_landed'] - fights_df['blue_leg_strikes_landed']
+
+        # position differentirals
+        target_df['distance_strike_diff'] = fights_df['red_distance_strikes_landed'] - fights_df['blue_distance_strikes_landed']
+        target_df['clinch_strike_diff'] = fights_df['red_clinch_strikes_landed'] - fights_df['blue_clinch_strikes_landed']
+        target_df['ground_strike_diff'] = fights_df['red_ground_strikes_landed'] - fights_df['blue_ground_strikes_landed']
+
         # calculate win rate differences
         target_df['win_rate_diff'] = (fights_df['career_red_wins_in_ufc'] / fights_df['career_red_total_ufc_fights'].where(fights_df['career_red_total_ufc_fights'] > 0, 1)) - \
                              (fights_df['career_blue_wins_in_ufc'] / fights_df['career_blue_total_ufc_fights'].where(fights_df['career_blue_total_ufc_fights'] > 0, 1))
-        
+
         return target_df
     
     def scale_features(self, df: pd.DataFrame) -> pd.DataFrame:
