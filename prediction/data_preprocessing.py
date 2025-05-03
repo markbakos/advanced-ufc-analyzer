@@ -567,6 +567,42 @@ class UFCFightsPreprocessor:
             target_df[f'{corner}_ground_strike_pct'] = fights_df[
                                                            f'{corner}_ground_strikes_thrown'] / total_position_strikes
 
+        #
+        # strike defense
+        #
+
+        for corner in ['red', 'blue']:
+            opponent = 'blue' if corner == 'red' else 'red'
+
+            # strikes absorbed vs thrown
+            opponent_strikes_thrown = fights_df[f'{opponent}_sig_strikes_thrown'].where(
+                fights_df[f'{opponent}_sig_strikes_thrown'] > 0, 1)
+
+            target_df[f'{corner}_strike_defense_rate'] = 1 - (
+                        fights_df[f'{corner}_sig_strikes_absorbed'] / opponent_strikes_thrown)
+
+            # defense by strike location
+            for location in ['head', 'body', 'leg']:
+                opponent_thrown = fights_df[f'{opponent}_{location}_strikes_thrown'].where(
+                    fights_df[f'{opponent}_{location}_strikes_thrown'] > 0, 1)
+                target_df[f'{corner}_{location}_defense_rate'] = 1 - (
+                            fights_df[f'{opponent}_{location}_strikes_landed'] / opponent_thrown)
+
+            # defense by position
+            for position in ['distance', 'clinch', 'ground']:
+                opponent_thrown = fights_df[f'{opponent}_{position}_strikes_thrown'].where(
+                    fights_df[f'{opponent}_{position}_strikes_thrown'] > 0, 1)
+                target_df[f'{corner}_{position}_defense_rate'] = 1 - (
+                            fights_df[f'{opponent}_{position}_strikes_landed'] / opponent_thrown)
+
+        target_df['strike_defense_diff'] = target_df['red_strike_defense_rate'] - target_df['blue_strike_defense_rate']
+        target_df['head_defense_diff'] = target_df['red_head_defense_rate'] - target_df['blue_head_defense_rate']
+        target_df['body_defense_diff'] = target_df['red_body_defense_rate'] - target_df['blue_body_defense_rate']
+        target_df['leg_defense_diff'] = target_df['red_leg_defense_rate'] - target_df['blue_leg_defense_rate']
+        target_df['distance_defense_diff'] = target_df['red_distance_defense_rate'] - target_df['blue_distance_defense_rate']
+        target_df['clinch_defense_diff'] = target_df['red_clinch_defense_rate'] - target_df['blue_clinch_defense_rate']
+        target_df['ground_defense_diff'] = target_df['red_ground_defense_rate'] - target_df['blue_ground_defense_rate']
+
         return target_df
     
     def scale_features(self, df: pd.DataFrame) -> pd.DataFrame:
