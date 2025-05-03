@@ -595,6 +595,7 @@ class UFCFightsPreprocessor:
                 target_df[f'{corner}_{position}_defense_rate'] = 1 - (
                             fights_df[f'{opponent}_{position}_strikes_landed'] / opponent_thrown)
 
+        # defense differentials
         target_df['strike_defense_diff'] = target_df['red_strike_defense_rate'] - target_df['blue_strike_defense_rate']
         target_df['head_defense_diff'] = target_df['red_head_defense_rate'] - target_df['blue_head_defense_rate']
         target_df['body_defense_diff'] = target_df['red_body_defense_rate'] - target_df['blue_body_defense_rate']
@@ -602,6 +603,34 @@ class UFCFightsPreprocessor:
         target_df['distance_defense_diff'] = target_df['red_distance_defense_rate'] - target_df['blue_distance_defense_rate']
         target_df['clinch_defense_diff'] = target_df['red_clinch_defense_rate'] - target_df['blue_clinch_defense_rate']
         target_df['ground_defense_diff'] = target_df['red_ground_defense_rate'] - target_df['blue_ground_defense_rate']
+
+        #
+        # grappling
+        #
+
+        # takedown defense rate
+        for corner in ['red', 'blue']:
+            opponent = 'blue' if corner == 'red' else 'red'
+
+            opponent_td_attempts = fights_df[f'{opponent}_takedowns_attempted'].where(
+                fights_df[f'{opponent}_takedowns_attempted'] > 0, 1)
+
+            target_df[f'{corner}_takedown_defense_rate'] = 1 - (
+                        fights_df[f'{corner}_takedowns_absorbed'] / opponent_td_attempts)
+
+        for corner in ['red', 'blue']:
+            # strikes on ground per takedown
+            takedowns = target_df[f'{corner}_takedowns_landed'].where(target_df[f'{corner}_takedowns_landed'] > 0, 1)
+            target_df[f'{corner}_ground_control_score'] = fights_df[f'{corner}_ground_strikes_landed'] / takedowns
+
+            # submission attempts per takedown
+            target_df[f'{corner}_sub_threat_score'] = target_df[f'{corner}_sub_attempts_landed'] / takedowns
+
+        # grappling differentials
+        target_df['takedown_defense_diff'] = target_df['red_takedown_defense_rate'] - target_df['blue_takedown_defense_rate']
+        target_df['sub_attempt_rate_diff'] = target_df['red_sub_attempts_landed_per_minute'] - target_df['blue_sub_attempts_landed_per_minute']
+        target_df['ground_control_diff'] = target_df['red_ground_control_score'] - target_df['blue_ground_control_score']
+        target_df['sub_threat_diff'] = target_df['red_sub_threat_score'] - target_df['blue_sub_threat_score']
 
         return target_df
     
