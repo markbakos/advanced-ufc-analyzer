@@ -9,7 +9,8 @@ from typing import Tuple, Dict, Any, List
 import logging
 import os
 
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - '
+                                               '%(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
 class UFCFightsPreprocessor:
@@ -18,7 +19,9 @@ class UFCFightsPreprocessor:
     Handles missing values, date columns and feature engineering
     """
     
-    def __init__(self, fights_path: str = 'fights.csv', fighters_path: str = 'fighters.csv', output_dir: str = 'data/processed'):
+    def __init__(self, fights_path: str = 'fights.csv',
+                 fighters_path: str = 'fighters.csv',
+                 output_dir: str = 'data/processed'):
         """
         Initialize the preprocessor with paths to data files.
         
@@ -89,14 +92,16 @@ class UFCFightsPreprocessor:
         df_processed['event_date'] = pd.to_datetime(df_processed['event_date'])
 
         date_columns = [
-            'career_red_last_fight_date', 'career_blue_last_fight_date', 'career_red_last_win_date', 'career_blue_last_win_date', 'event_date'
+            'career_red_last_fight_date', 'career_blue_last_fight_date',
+            'career_red_last_win_date', 'career_blue_last_win_date', 'event_date'
         ]
 
         for col in date_columns:
             if col in df_processed.columns:
                 df_processed[col] = pd.to_datetime(df_processed[col], errors='coerce')
 
-        for col in ['career_red_last_fight_date', 'career_blue_last_fight_date', 'career_red_last_win_date', 'career_blue_last_win_date']:
+        for col in ['career_red_last_fight_date', 'career_blue_last_fight_date',
+                    'career_red_last_win_date', 'career_blue_last_win_date']:
             if col in df_processed.columns:
                 days_since_col = col.replace('date', 'days_since')
                 df_processed[days_since_col] = (df_processed['event_date'] - df_processed[col]).dt.days
@@ -120,8 +125,13 @@ class UFCFightsPreprocessor:
         
         time_columns = [
             'time', 'red_control_time', 'blue_control_time',
-            'red_control_time_rd1', 'red_control_time_rd2', 'red_control_time_rd3', 'red_control_time_rd4', 'red_control_time_rd5',
-            'blue_control_time_rd1', 'blue_control_time_rd2', 'blue_control_time_rd3', 'blue_control_time_rd4', 'blue_control_time_rd5'
+            'red_control_time_rd1', 'red_control_time_rd2',
+            'red_control_time_rd3', 'red_control_time_rd4',
+            'red_control_time_rd5',
+
+            'blue_control_time_rd1', 'blue_control_time_rd2',
+            'blue_control_time_rd3', 'blue_control_time_rd4',
+            'blue_control_time_rd5'
         ]
         
         def convert_time_to_seconds(time_str):
@@ -247,12 +257,17 @@ class UFCFightsPreprocessor:
 
         columns = [
                 '_total_ufc_fights', '_wins_in_ufc', '_losses_in_ufc', '_draws_in_ufc',
-                '_wins_by_dec', '_losses_by_dec', '_wins_by_sub', '_losses_by_sub', '_wins_by_ko', '_losses_by_ko', 
-                '_knockdowns_landed', '_knockdowns_absorbed', '_strikes_landed', '_strikes_absorbed',
-                '_takedowns_landed', '_takedowns_absorbed', '_sub_attempts_landed', '_sub_attempts_absorbed', '_total_rounds',
-                '_total_time_minutes', '_avg_knockdowns_landed', '_avg_knockdowns_absorbed', '_avg_strikes_landed',
-                '_avg_strikes_absorbed', '_avg_takedowns_landed', '_avg_takedowns_absorbed','_avg_submission_attempts_landed',
-                '_avg_submission_attempts_absorbed', '_avg_fight_time_min', '_last_fight_days_since'
+                '_wins_by_dec', '_losses_by_dec', '_wins_by_sub', '_losses_by_sub',
+                '_wins_by_ko', '_losses_by_ko',  '_knockdowns_landed',
+                '_knockdowns_absorbed', '_strikes_landed', '_strikes_absorbed',
+                '_takedowns_landed', '_takedowns_absorbed',
+                '_sub_attempts_landed', '_sub_attempts_absorbed', '_total_rounds',
+                '_total_time_minutes', '_avg_knockdowns_landed',
+                '_avg_knockdowns_absorbed', '_avg_strikes_landed',
+                '_avg_strikes_absorbed', '_avg_takedowns_landed',
+                '_avg_takedowns_absorbed','_avg_submission_attempts_landed',
+                '_avg_submission_attempts_absorbed', '_avg_fight_time_min',
+                '_last_fight_days_since'
             ]
 
         for corner in ['red', 'blue']:
