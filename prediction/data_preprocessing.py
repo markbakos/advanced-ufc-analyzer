@@ -665,6 +665,26 @@ class UFCFightsPreprocessor:
         target_df['damage_efficiency_diff'] = target_df['red_damage_efficiency'] - target_df['blue_damage_efficiency']
         target_df['head_strike_damage_ratio_diff'] = target_df['red_head_strike_damage_ratio'] - target_df['blue_head_strike_damage_ratio']
 
+        # fight pace
+        for corner in ['red', 'blue']:
+            # avg fight length
+            target_df[f'{corner}_avg_fight_length'] = target_df[f'{corner}_total_time_minutes'] / target_df[
+                f'{corner}_total_ufc_fights'].where(target_df[f'{corner}_total_ufc_fights'] > 0, 1)
+
+            # fight pace (total offensive action per minute)
+            offensive_actions = (target_df[f'{corner}_strikes_thrown'] +
+                                 target_df[f'{corner}_takedowns_landed'] +
+                                 target_df[f'{corner}_sub_attempts_landed'])
+
+            target_df[f'{corner}_fight_pace'] = (offensive_actions /
+                    target_df[f'{corner}_total_time_minutes'].where(target_df[f'{corner}_total_time_minutes'] > 0, 1))
+
+        # fight pace differentials
+        target_df['avg_fight_length_diff'] = target_df['red_avg_fight_length'] - target_df['blue_avg_fight_length']
+        target_df['fight_pace_diff'] = target_df['red_fight_pace'] - target_df['blue_fight_pace']
+
+
+
         return target_df
 
     def scale_features(self, df: pd.DataFrame) -> pd.DataFrame:
