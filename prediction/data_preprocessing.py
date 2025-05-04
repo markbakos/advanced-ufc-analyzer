@@ -437,8 +437,6 @@ class UFCFightsPreprocessor:
                 target_df[f'{corner}_{col}_per_minute'] = fight_df[f'career_{corner}_{col}'] / fight_df[f'career_{corner}_total_time_minutes'].where(fight_df[f'career_{corner}_total_time_minutes'] > 0, 1)
                 target_df[f'{corner}_{col}_per_round'] = fight_df[f'career_{corner}_{col}'] / fight_df[f'career_{corner}_total_rounds'].where(fight_df[f'career_{corner}_total_rounds'] > 0, 1)
 
-            # target_df[f'{corner}_striking_accuracy'] = fight_df[f'career_{corner}202_strikes_landed'] / fight_df[f'career_{corner}_strikes_thrown'].where(fight_df[f'career_{corner}_strikes_thrown'] > 0, 1)
-
         return target_df
 
     def engineer_features(self, target_df: pd.DataFrame , fights_df: pd.DataFrame) -> pd.DataFrame:
@@ -458,16 +456,11 @@ class UFCFightsPreprocessor:
         #
 
         # calculate experience difference
-        target_df['experience_diff'] = fights_df['career_red_total_ufc_fights'] - fights_df['career_blue_total_ufc_fights']
+        target_df['experience_diff'] = target_df['red_total_ufc_fights'] - target_df['blue_total_ufc_fights']
 
         # calculate win rate differences
-        target_df['win_rate_diff'] = (fights_df['career_red_wins_in_ufc'] / fights_df['career_red_total_ufc_fights'].where(fights_df['career_red_total_ufc_fights'] > 0, 1)) - \
-                                     (fights_df['career_blue_wins_in_ufc'] / fights_df['career_blue_total_ufc_fights'].where(fights_df['career_blue_total_ufc_fights'] > 0, 1))
-        
-        # calculate striking efficiency
-        target_df['red_strike_efficiency'] = fights_df['red_sig_strikes_landed'] / fights_df['red_sig_strikes_thrown'].where(fights_df['red_sig_strikes_thrown'] > 0, 1)
-        target_df['blue_strike_efficiency'] = fights_df['blue_sig_strikes_landed'] / fights_df['blue_sig_strikes_thrown'].where(fights_df['blue_sig_strikes_thrown'] > 0, 1)
-        target_df['strike_efficiency_diff'] = target_df['red_strike_efficiency'] - target_df['blue_strike_efficiency']
+        target_df['win_rate_diff'] = (target_df['red_wins_in_ufc'] / target_df['red_total_ufc_fights'].where(target_df['red_total_ufc_fights'] > 0, 1)) - \
+                                     (target_df['blue_wins_in_ufc'] / fights_df['blue_total_ufc_fights'].where(fights_df['blue_total_ufc_fights'] > 0, 1))
 
         # calculate takedown efficiency
         target_df['red_takedown_efficiency'] = fights_df['red_takedowns_landed'] / fights_df['red_takedowns_attempted'].where(fights_df['red_takedowns_attempted'] > 0, 1)
@@ -479,46 +472,46 @@ class UFCFightsPreprocessor:
         #
 
         # total strikes, per round, per minute
-        target_df['total_strike_diff'] = fights_df['red_total_strikes_landed'] - fights_df['blue_total_strikes_landed']
+        target_df['total_strike_diff'] = target_df['red_strikes_landed'] - target_df['blue_strikes_landed']
         target_df['total_strike_diff_per_round'] = target_df['red_strikes_landed_per_round'] - target_df['blue_strikes_landed_per_round']
         target_df['total_strike_diff_per_minute'] = target_df['red_strikes_landed_per_minute'] - target_df['blue_strikes_landed_per_minute']
 
         # location differentials
-        target_df['total_head_strike_diff'] = fights_df['red_head_strikes_landed'] - fights_df['blue_head_strikes_landed']
-        target_df['total_body_strike_diff'] = fights_df['red_body_strikes_landed'] - fights_df['blue_body_strikes_landed']
-        target_df['total_leg_strike_diff'] = fights_df['red_leg_strikes_landed'] - fights_df['blue_leg_strikes_landed']
+        target_df['total_head_strike_diff'] = target_df['red_head_strikes_landed'] - target_df['blue_head_strikes_landed']
+        target_df['total_body_strike_diff'] = target_df['red_body_strikes_landed'] - target_df['blue_body_strikes_landed']
+        target_df['total_leg_strike_diff'] = target_df['red_leg_strikes_landed'] - target_df['blue_leg_strikes_landed']
 
         # position differentirals
-        target_df['distance_strike_diff'] = fights_df['red_distance_strikes_landed'] - fights_df['blue_distance_strikes_landed']
-        target_df['clinch_strike_diff'] = fights_df['red_clinch_strikes_landed'] - fights_df['blue_clinch_strikes_landed']
-        target_df['ground_strike_diff'] = fights_df['red_ground_strikes_landed'] - fights_df['blue_ground_strikes_landed']
+        target_df['distance_strike_diff'] = target_df['red_distance_strikes_landed'] - target_df['blue_distance_strikes_landed']
+        target_df['clinch_strike_diff'] = target_df['red_clinch_strikes_landed'] - target_df['blue_clinch_strikes_landed']
+        target_df['ground_strike_diff'] = target_df['red_ground_strikes_landed'] - target_df['blue_ground_strikes_landed']
 
         # strike accuracy
         for corner in ['red', 'blue']:
             # head strike accuracy
-            target_df[f'{corner}_head_strike_accuracy'] = fights_df[f'{corner}_head_strikes_landed'] / fights_df[
-                f'{corner}_head_strikes_thrown'].where(fights_df[f'{corner}_head_strikes_thrown'] > 0, 1)
+            target_df[f'{corner}_head_strike_accuracy'] = target_df[f'{corner}_head_strikes_landed'] / target_df[
+                f'{corner}_head_strikes_thrown'].where(target_df[f'{corner}_head_strikes_thrown'] > 0, 1)
 
             # body strike accuracy
-            target_df[f'{corner}_body_strike_accuracy'] = fights_df[f'{corner}_body_strikes_landed'] / fights_df[
-                f'{corner}_body_strikes_thrown'].where(fights_df[f'{corner}_body_strikes_thrown'] > 0, 1)
+            target_df[f'{corner}_body_strike_accuracy'] = target_df[f'{corner}_body_strikes_landed'] / target_df[
+                f'{corner}_body_strikes_thrown'].where(target_df[f'{corner}_body_strikes_thrown'] > 0, 1)
 
             # leg strike accuracy
-            target_df[f'{corner}_leg_strike_accuracy'] = fights_df[f'{corner}_leg_strikes_landed'] / fights_df[
-                f'{corner}_leg_strikes_thrown'].where(fights_df[f'{corner}_leg_strikes_thrown'] > 0, 1)
+            target_df[f'{corner}_leg_strike_accuracy'] = target_df[f'{corner}_leg_strikes_landed'] / target_df[
+                f'{corner}_leg_strikes_thrown'].where(target_df[f'{corner}_leg_strikes_thrown'] > 0, 1)
 
             # distance strikes
-            target_df[f'{corner}_distance_strike_accuracy'] = fights_df[f'{corner}_distance_strikes_landed'] / \
-                                                              fights_df[f'{corner}_distance_strikes_thrown'].where(
-                                                                  fights_df[f'{corner}_distance_strikes_thrown'] > 0, 1)
+            target_df[f'{corner}_distance_strike_accuracy'] = target_df[f'{corner}_distance_strikes_landed'] / \
+                                                              target_df[f'{corner}_distance_strikes_thrown'].where(
+                                                                  target_df[f'{corner}_distance_strikes_thrown'] > 0, 1)
 
             # clinch strike accuracy
-            target_df[f'{corner}_clinch_strike_accuracy'] = fights_df[f'{corner}_clinch_strikes_landed'] / fights_df[
-                f'{corner}_clinch_strikes_thrown'].where(fights_df[f'{corner}_clinch_strikes_thrown'] > 0, 1)
+            target_df[f'{corner}_clinch_strike_accuracy'] = target_df[f'{corner}_clinch_strikes_landed'] / target_df[
+                f'{corner}_clinch_strikes_thrown'].where(target_df[f'{corner}_clinch_strikes_thrown'] > 0, 1)
 
             # ground strikes accuracy
-            target_df[f'{corner}_ground_strike_accuracy'] = fights_df[f'{corner}_ground_strikes_landed'] / fights_df[
-                f'{corner}_ground_strikes_thrown'].where(fights_df[f'{corner}_ground_strikes_thrown'] > 0, 1)
+            target_df[f'{corner}_ground_strike_accuracy'] = target_df[f'{corner}_ground_strikes_landed'] / target_df[
+                f'{corner}_ground_strikes_thrown'].where(target_df[f'{corner}_ground_strikes_thrown'] > 0, 1)
 
         # accuracy differentials
         target_df['head_accuracy_diff'] = target_df['red_head_strike_accuracy'] - target_df['blue_head_strike_accuracy']
@@ -535,37 +528,45 @@ class UFCFightsPreprocessor:
         for corner in ['red', 'blue']:
             # calculate total strikes thrown to each target
             total_strikes_thrown = (
-                    fights_df[f'{corner}_head_strikes_thrown'] +
-                    fights_df[f'{corner}_body_strikes_thrown'] +
-                    fights_df[f'{corner}_leg_strikes_thrown']
+                    target_df[f'{corner}_head_strikes_thrown'] +
+                    target_df[f'{corner}_body_strikes_thrown'] +
+                    target_df[f'{corner}_leg_strikes_thrown']
             ).where(
-                (fights_df[f'{corner}_head_strikes_thrown'] + fights_df[f'{corner}_body_strikes_thrown'] + fights_df[
+                (target_df[f'{corner}_head_strikes_thrown'] + target_df[f'{corner}_body_strikes_thrown'] + target_df[
                     f'{corner}_leg_strikes_thrown']) > 0, 1
             )
 
+            # calculate total strikes thrown
+            target_df[f'{corner}_strikes_thrown'] = total_strikes_thrown
+
             # calculate percent of strikes thrown to each target
-            target_df[f'{corner}_head_strike_pct'] = fights_df[f'{corner}_head_strikes_thrown'] / total_strikes_thrown
-            target_df[f'{corner}_body_strike_pct'] = fights_df[f'{corner}_body_strikes_thrown'] / total_strikes_thrown
-            target_df[f'{corner}_leg_strike_pct'] = fights_df[f'{corner}_leg_strikes_thrown'] / total_strikes_thrown
+            target_df[f'{corner}_head_strike_pct'] = target_df[f'{corner}_head_strikes_thrown'] / total_strikes_thrown
+            target_df[f'{corner}_body_strike_pct'] = target_df[f'{corner}_body_strikes_thrown'] / total_strikes_thrown
+            target_df[f'{corner}_leg_strike_pct'] = target_df[f'{corner}_leg_strikes_thrown'] / total_strikes_thrown
 
             # calculate total strikes thrown from each position
             total_position_strikes = (
-                    fights_df[f'{corner}_distance_strikes_thrown'] +
-                    fights_df[f'{corner}_clinch_strikes_thrown'] +
-                    fights_df[f'{corner}_ground_strikes_thrown']
+                    target_df[f'{corner}_distance_strikes_thrown'] +
+                    target_df[f'{corner}_clinch_strikes_thrown'] +
+                    target_df[f'{corner}_ground_strikes_thrown']
             ).where(
-                (fights_df[f'{corner}_distance_strikes_thrown'] +
-                 fights_df[f'{corner}_clinch_strikes_thrown'] +
-                 fights_df[f'{corner}_ground_strikes_thrown']) > 0, 1
+                (target_df[f'{corner}_distance_strikes_thrown'] +
+                 target_df[f'{corner}_clinch_strikes_thrown'] +
+                 target_df[f'{corner}_ground_strikes_thrown']) > 0, 1
             )
 
             # percent of strikes from each position
-            target_df[f'{corner}_distance_strike_pct'] = fights_df[
+            target_df[f'{corner}_distance_strike_pct'] = target_df[
                                                              f'{corner}_distance_strikes_thrown'] / total_position_strikes
-            target_df[f'{corner}_clinch_strike_pct'] = fights_df[
+            target_df[f'{corner}_clinch_strike_pct'] = target_df[
                                                            f'{corner}_clinch_strikes_thrown'] / total_position_strikes
-            target_df[f'{corner}_ground_strike_pct'] = fights_df[
+            target_df[f'{corner}_ground_strike_pct'] = target_df[
                                                            f'{corner}_ground_strikes_thrown'] / total_position_strikes
+
+        # calculate striking efficiency
+        target_df['red_strike_efficiency'] = fights_df['red_strikes_landed'] / fights_df['red_strikes_thrown'].where(fights_df['red_strikes_thrown'] > 0, 1)
+        target_df['blue_strike_efficiency'] = fights_df['blue_strikes_landed'] / fights_df['blue_strikes_thrown'].where(fights_df['blue_strikes_thrown'] > 0, 1)
+        target_df['strike_efficiency_diff'] = target_df['red_strike_efficiency'] - target_df['blue_strike_efficiency']
 
         #
         # strike defense
@@ -575,22 +576,22 @@ class UFCFightsPreprocessor:
             opponent = 'blue' if corner == 'red' else 'red'
 
             # strikes absorbed vs thrown
-            opponent_strikes_thrown = fights_df[f'{opponent}_sig_strikes_thrown'].where(
-                fights_df[f'{opponent}_sig_strikes_thrown'] > 0, 1)
+            opponent_strikes_thrown = target_df[f'{opponent}_sig_strikes_thrown'].where(
+                target_df[f'{opponent}_sig_strikes_thrown'] > 0, 1)
 
             target_df[f'{corner}_strike_defense_rate'] = 1 - (
-                        fights_df[f'{corner}_sig_strikes_absorbed'] / opponent_strikes_thrown)
+                        target_df[f'{corner}_sig_strikes_absorbed'] / opponent_strikes_thrown)
 
             # defense by strike location
             for location in ['head', 'body', 'leg']:
-                opponent_thrown = fights_df[f'{opponent}_{location}_strikes_thrown'].where(
-                    fights_df[f'{opponent}_{location}_strikes_thrown'] > 0, 1)
+                opponent_thrown = target_df[f'{opponent}_{location}_strikes_thrown'].where(
+                    target_df[f'{opponent}_{location}_strikes_thrown'] > 0, 1)
                 target_df[f'{corner}_{location}_defense_rate'] = 1 - (
-                            fights_df[f'{opponent}_{location}_strikes_landed'] / opponent_thrown)
+                            target_df[f'{opponent}_{location}_strikes_landed'] / opponent_thrown)
 
             # defense by position
             for position in ['distance', 'clinch', 'ground']:
-                opponent_thrown = fights_df[f'{opponent}_{position}_strikes_thrown'].where(
+                opponent_thrown = target_df[f'{opponent}_{position}_strikes_thrown'].where(
                     fights_df[f'{opponent}_{position}_strikes_thrown'] > 0, 1)
                 target_df[f'{corner}_{position}_defense_rate'] = 1 - (
                             fights_df[f'{opponent}_{position}_strikes_landed'] / opponent_thrown)
@@ -612,16 +613,16 @@ class UFCFightsPreprocessor:
         for corner in ['red', 'blue']:
             opponent = 'blue' if corner == 'red' else 'red'
 
-            opponent_td_attempts = fights_df[f'{opponent}_takedowns_attempted'].where(
-                fights_df[f'{opponent}_takedowns_attempted'] > 0, 1)
+            opponent_td_attempts = target_df[f'{opponent}_takedowns_attempted'].where(
+                target_df[f'{opponent}_takedowns_attempted'] > 0, 1)
 
             target_df[f'{corner}_takedown_defense_rate'] = 1 - (
-                        fights_df[f'{corner}_takedowns_absorbed'] / opponent_td_attempts)
+                        target_df[f'{corner}_takedowns_absorbed'] / opponent_td_attempts)
 
         for corner in ['red', 'blue']:
             # strikes on ground per takedown
             takedowns = target_df[f'{corner}_takedowns_landed'].where(target_df[f'{corner}_takedowns_landed'] > 0, 1)
-            target_df[f'{corner}_ground_control_score'] = fights_df[f'{corner}_ground_strikes_landed'] / takedowns
+            target_df[f'{corner}_ground_control_score'] = target_df[f'{corner}_ground_strikes_landed'] / takedowns
 
             # submission attempts per takedown
             target_df[f'{corner}_sub_threat_score'] = target_df[f'{corner}_sub_attempts_landed'] / takedowns
