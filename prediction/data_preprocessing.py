@@ -706,6 +706,36 @@ class UFCFightsPreprocessor:
         target_df['body_strike_defense_diff'] = target_df['red_body_strike_defense'] - target_df['blue_body_strike_defense']
         target_df['leg_strike_defense_diff'] = target_df['red_leg_strike_defense'] - target_df['blue_leg_strike_defense']
 
+        # compound metrics
+        for corner in ['red', 'blue']:
+            # striking effectiveness (combines offense and defense)
+            target_df[f'{corner}_overall_striking_effectiveness'] = (
+                    target_df[f'{corner}_strike_efficiency'] * 0.6 +
+                    (1 - (target_df[f'{corner}_strikes_absorbed'] / target_df[f'{corner}_strikes_thrown'].where(
+                        target_df[f'{corner}_strikes_thrown'] > 0, 1))) * 0.4
+            )
+
+            # grappling effectiveness
+            target_df[f'{corner}_overall_grappling_effectiveness'] = (
+                    target_df[f'{corner}_sub_attempts_landed_per_round'] * 0.6 +
+                    (1 - target_df[f'{corner}_takedowns_absorbed_per_round']) * 0.4
+            )
+
+            # fighter durability
+            target_df[f'{corner}_durability'] = 1 - (
+                    target_df[f'{corner}_knockdowns_absorbed'] / target_df[f'{corner}_strikes_absorbed'].where(
+                target_df[f'{corner}_strikes_absorbed'] > 0, 1)
+            )
+
+        # compound metrics differentials
+        target_df['overall_striking_effectiveness_diff'] = (
+                target_df['red_overall_striking_effectiveness'] - target_df['blue_overall_striking_effectiveness']
+        )
+        target_df['overall_grappling_effectiveness_diff'] = (
+                target_df['red_overall_grappling_effectiveness'] - target_df['blue_overall_grappling_effectiveness']
+        )
+        target_df['durability_diff'] = target_df['red_durability'] - target_df['blue_durability']
+
         return target_df
 
     def scale_features(self, df: pd.DataFrame) -> pd.DataFrame:
