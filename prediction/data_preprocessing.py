@@ -602,7 +602,6 @@ class UFCFightsPreprocessor:
         target_df['decision_rate_diff'] = target_df['red_decision_rate'] - target_df['blue_decision_rate']
 
         # activity
-
         for corner in ['red', 'blue']:
             # striking volume
             target_df[f'{corner}_strike_volume'] = target_df[f'{corner}_total_strikes_thrown'] / target_df[
@@ -614,11 +613,41 @@ class UFCFightsPreprocessor:
 
         # activity differentials
         target_df['strike_volume_diff'] = target_df['red_strike_volume'] - target_df['blue_strike_volume']
-        target_df['sub_attempt_frequency_diff'] = (target_df['red_sub_attempt_frequency'] -
-                                                   target_df['blue_sub_attempt_frequency'])
+        target_df['sub_attempt_frequency_diff'] = (target_df['red_sub_attempt_frequency'] - target_df['blue_sub_attempt_frequency'])
+
+        # fight style
+        for corner in ['red', 'blue']:
+            # striking vs grappling preference
+            total_offensive_actions = (target_df[f'{corner}_strikes_thrown'] +
+                                       target_df[f'{corner}_takedowns_landed'] +
+                                       target_df[f'{corner}_sub_attempts_landed'])
+
+            # striking preference
+            target_df[f'{corner}_striking_preference'] = (target_df[ f'{corner}_strikes_thrown'] /
+                                                          total_offensive_actions.where(total_offensive_actions > 0, 1))
+
+            # grappling preference (takedowns and submissions)
+            target_df[f'{corner}_grappling_preference'] = ((target_df[f'{corner}_takedowns_landed'] +
+                                                           target_df[f'{corner}_sub_attempts_landed']) /
+                                                           total_offensive_actions.where(total_offensive_actions > 0, 1))
+
+            # ground vs standing preference
+            target_df[f'{corner}_ground_preference'] = target_df[f'{corner}_ground_strikes_thrown'] / target_df[
+                f'{corner}_total_strikes_thrown'].where(target_df[f'{corner}_total_strikes_thrown'] > 0, 1)
+
+            # distance vs clinch pref
+            target_df[f'{corner}_distance_preference'] = target_df[f'{corner}_distance_strikes_thrown'] / (
+                    target_df[f'{corner}_distance_strikes_thrown'] + target_df[f'{corner}_clinch_strikes_thrown']).where(
+                (target_df[f'{corner}_distance_strikes_thrown'] + target_df[f'{corner}_clinch_strikes_thrown']) > 0, 1)
+
+        # fighting style differentials
+        target_df['striking_preference_diff'] = target_df['red_striking_preference'] - target_df['blue_striking_preference']
+        target_df['grappling_preference_diff'] = target_df['red_grappling_preference'] - target_df['blue_grappling_preference']
+        target_df['ground_preference_diff'] = target_df['red_ground_preference'] - target_df['blue_ground_preference']
+        target_df['distance_preference_diff'] = target_df['red_distance_preference'] - target_df['blue_distance_preference']
 
         return target_df
-    
+
     def scale_features(self, df: pd.DataFrame) -> pd.DataFrame:
         """
         Scale numerical features using StandardScaler
