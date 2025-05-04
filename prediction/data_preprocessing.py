@@ -573,6 +573,34 @@ class UFCFightsPreprocessor:
         target_df['blue_strike_efficiency'] = target_df['blue_strikes_landed'] / target_df['blue_strikes_thrown'].where(target_df['blue_strikes_thrown'] > 0, 1)
         target_df['strike_efficiency_diff'] = target_df['red_strike_efficiency'] - target_df['blue_strike_efficiency']
 
+        # finish rates
+        for corner in ['red', 'blue']:
+            finish_wins = target_df[f'{corner}_wins_by_ko'] + target_df[f'{corner}_wins_by_sub']
+            total_wins = target_df[f'{corner}_wins_in_ufc']
+            target_df[f'{corner}_finish_rate'] = finish_wins / total_wins.where(total_wins > 0, 1)
+
+            # ko rate
+            target_df[f'{corner}_ko_rate'] = target_df[f'{corner}_wins_by_ko'] / total_wins.where(total_wins > 0, 1)
+
+            # sub rate
+            target_df[f'{corner}_sub_rate'] = target_df[f'{corner}_wins_by_sub'] / total_wins.where(total_wins > 0, 1)
+
+            # decision rate
+            target_df[f'{corner}_decision_rate'] = target_df[f'{corner}_wins_by_dec'] / total_wins.where(total_wins > 0, 1)
+
+            # loss methods
+            total_losses = target_df[f'{corner}_losses_in_ufc']
+
+            target_df[f'{corner}_ko_loss_rate'] = target_df[f'{corner}_losses_by_ko'] / total_losses.where(total_losses > 0, 1)
+            target_df[f'{corner}_sub_loss_rate'] = target_df[f'{corner}_losses_by_sub'] / total_losses.where(total_losses > 0, 1)
+            target_df[f'{corner}_decision_loss_rate'] = target_df[f'{corner}_losses_by_dec'] / total_losses.where(total_losses > 0, 1)
+
+        # finish rate differentials
+        target_df['finish_rate_diff'] = target_df['red_finish_rate'] - target_df['blue_finish_rate']
+        target_df['ko_rate_diff'] = target_df['red_ko_rate'] - target_df['blue_ko_rate']
+        target_df['sub_rate_diff'] = target_df['red_sub_rate'] - target_df['blue_sub_rate']
+        target_df['decision_rate_diff'] = target_df['red_decision_rate'] - target_df['blue_decision_rate']
+
         return target_df
     
     def scale_features(self, df: pd.DataFrame) -> pd.DataFrame:
@@ -678,7 +706,7 @@ class UFCFightsPreprocessor:
         self.output_df = self.copy_fighter_stats(self.output_df, fights_df)
         self.output_df = self.calculate_career_stats(self.output_df, fights_df)
         self.output_df = self.get_all_strike_data(self.output_df, fights_df)
-        self.output_df = self.engineer_features(self.output_df, fights_df)
+        self.output_df = self.engineer_features(self.output_df)
         
         # # handle round data first to avoid issues with missing values
         # fights_df = self.handle_round_data(fights_df)
