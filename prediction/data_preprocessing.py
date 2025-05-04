@@ -683,7 +683,28 @@ class UFCFightsPreprocessor:
         target_df['avg_fight_length_diff'] = target_df['red_avg_fight_length'] - target_df['blue_avg_fight_length']
         target_df['fight_pace_diff'] = target_df['red_fight_pace'] - target_df['blue_fight_pace']
 
+        # strike defense
+        for corner in ['red', 'blue']:
+            # head strike defense
+            target_df[f'{corner}_head_strike_defense'] = (1 -
+                            (target_df[f'{corner}_head_strikes_landed_opponent'] /
+                            target_df[ f'{corner}_head_strikes_thrown_opponent']).where(
+                            target_df[f'{corner}_head_strikes_thrown_opponent'] > 0, 1))
 
+            # body strike defense
+            target_df[f'{corner}_body_strike_defense'] = (1 -
+                            (target_df[f'{corner}_body_strikes_landed_opponent'] /
+                            target_df[f'{corner}_body_strikes_thrown_opponent']).where(
+                            target_df[f'{corner}_body_strikes_thrown_opponent'] > 0, 1))
+
+            # leg strike defense
+            target_df[f'{corner}_leg_strike_defense'] = 1 - (target_df[f'{corner}_leg_strikes_landed_opponent'] /
+                target_df[f'{corner}_leg_strikes_thrown_opponent']).where(target_df[f'{corner}_leg_strikes_thrown_opponent'] > 0, 1)
+
+        # strike defense differentials
+        target_df['head_strike_defense_diff'] = target_df['red_head_strike_defense'] - target_df['blue_head_strike_defense']
+        target_df['body_strike_defense_diff'] = target_df['red_body_strike_defense'] - target_df['blue_body_strike_defense']
+        target_df['leg_strike_defense_diff'] = target_df['red_leg_strike_defense'] - target_df['blue_leg_strike_defense']
 
         return target_df
 
