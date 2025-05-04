@@ -460,12 +460,10 @@ class UFCFightsPreprocessor:
 
         # calculate win rate differences
         target_df['win_rate_diff'] = (target_df['red_wins_in_ufc'] / target_df['red_total_ufc_fights'].where(target_df['red_total_ufc_fights'] > 0, 1)) - \
-                                     (target_df['blue_wins_in_ufc'] / fights_df['blue_total_ufc_fights'].where(fights_df['blue_total_ufc_fights'] > 0, 1))
+                                     (target_df['blue_wins_in_ufc'] / target_df['blue_total_ufc_fights'].where(target_df['blue_total_ufc_fights'] > 0, 1))
 
-        # calculate takedown efficiency
-        target_df['red_takedown_efficiency'] = fights_df['red_takedowns_landed'] / fights_df['red_takedowns_attempted'].where(fights_df['red_takedowns_attempted'] > 0, 1)
-        target_df['blue_takedown_efficiency'] = fights_df['blue_takedowns_landed'] / fights_df['blue_takedowns_attempted'].where(fights_df['blue_takedowns_attempted'] > 0, 1)
-        target_df['takedown_efficiency_diff'] = target_df['red_takedown_efficiency'] - target_df['blue_takedown_efficiency']
+        # calculate takedown differentials
+        target_df['takedown_diff'] = target_df['red_takedowns_landed'] - target_df['blue_takedowns_landed']
 
         #
         # striking differentials from here:
@@ -532,11 +530,12 @@ class UFCFightsPreprocessor:
                     target_df[f'{corner}_body_strikes_thrown'] +
                     target_df[f'{corner}_leg_strikes_thrown']
             ).where(
-                (target_df[f'{corner}_head_strikes_thrown'] + target_df[f'{corner}_body_strikes_thrown'] + target_df[
-                    f'{corner}_leg_strikes_thrown']) > 0, 1
+                (target_df[f'{corner}_head_strikes_thrown'] +
+                 target_df[f'{corner}_body_strikes_thrown'] +
+                 target_df[f'{corner}_leg_strikes_thrown']) > 0, 1
             )
 
-            # calculate total strikes thrown
+            # save total strikes thrown
             target_df[f'{corner}_strikes_thrown'] = total_strikes_thrown
 
             # calculate percent of strikes thrown to each target
@@ -555,6 +554,12 @@ class UFCFightsPreprocessor:
                  target_df[f'{corner}_ground_strikes_thrown']) > 0, 1
             )
 
+            # save position strikes thrown
+            target_df[f'{corner}_position_strikes_thrown'] = total_position_strikes
+
+            # save total strikes thrown
+            target_df[f'{corner}_total_strikes_thrown'] = total_strikes_thrown + total_position_strikes
+
             # percent of strikes from each position
             target_df[f'{corner}_distance_strike_pct'] = target_df[
                                                              f'{corner}_distance_strikes_thrown'] / total_position_strikes
@@ -564,8 +569,8 @@ class UFCFightsPreprocessor:
                                                            f'{corner}_ground_strikes_thrown'] / total_position_strikes
 
         # calculate striking efficiency
-        target_df['red_strike_efficiency'] = fights_df['red_strikes_landed'] / fights_df['red_strikes_thrown'].where(fights_df['red_strikes_thrown'] > 0, 1)
-        target_df['blue_strike_efficiency'] = fights_df['blue_strikes_landed'] / fights_df['blue_strikes_thrown'].where(fights_df['blue_strikes_thrown'] > 0, 1)
+        target_df['red_strike_efficiency'] = target_df['red_strikes_landed'] / target_df['red_strikes_thrown'].where(target_df['red_strikes_thrown'] > 0, 1)
+        target_df['blue_strike_efficiency'] = target_df['blue_strikes_landed'] / target_df['blue_strikes_thrown'].where(target_df['blue_strikes_thrown'] > 0, 1)
         target_df['strike_efficiency_diff'] = target_df['red_strike_efficiency'] - target_df['blue_strike_efficiency']
 
         #
@@ -577,7 +582,7 @@ class UFCFightsPreprocessor:
 
             # strikes absorbed vs thrown
             opponent_strikes_thrown = target_df[f'{opponent}_sig_strikes_thrown'].where(
-                target_df[f'{opponent}_sig_strikes_thrown'] > 0, 1)
+                target_df[f'{opponent}_strikes_thrown'] > 0, 1)
 
             target_df[f'{corner}_strike_defense_rate'] = 1 - (
                         target_df[f'{corner}_sig_strikes_absorbed'] / opponent_strikes_thrown)
