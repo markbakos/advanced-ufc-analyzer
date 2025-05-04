@@ -601,6 +601,22 @@ class UFCFightsPreprocessor:
         target_df['sub_rate_diff'] = target_df['red_sub_rate'] - target_df['blue_sub_rate']
         target_df['decision_rate_diff'] = target_df['red_decision_rate'] - target_df['blue_decision_rate']
 
+        # activity
+
+        for corner in ['red', 'blue']:
+            # striking volume
+            target_df[f'{corner}_strike_volume'] = target_df[f'{corner}_total_strikes_thrown'] / target_df[
+                f'{corner}_total_time_minutes'].where(target_df[f'{corner}_total_time_minutes'] > 0, 1)
+
+            # sub attempt frequency
+            target_df[f'{corner}_sub_attempt_frequency'] = target_df[f'{corner}_sub_attempts_landed'] / target_df[
+                f'{corner}_total_time_minutes'].where(target_df[f'{corner}_total_time_minutes'] > 0, 1)
+
+        # activity differentials
+        target_df['strike_volume_diff'] = target_df['red_strike_volume'] - target_df['blue_strike_volume']
+        target_df['sub_attempt_frequency_diff'] = (target_df['red_sub_attempt_frequency'] -
+                                                   target_df['blue_sub_attempt_frequency'])
+
         return target_df
     
     def scale_features(self, df: pd.DataFrame) -> pd.DataFrame:
