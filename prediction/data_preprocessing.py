@@ -646,6 +646,25 @@ class UFCFightsPreprocessor:
         target_df['ground_preference_diff'] = target_df['red_ground_preference'] - target_df['blue_ground_preference']
         target_df['distance_preference_diff'] = target_df['red_distance_preference'] - target_df['blue_distance_preference']
 
+        # damage metrics
+        for corner in ['red', 'blue']:
+            # knockdown ratio (knockdowns landed / knockdowns absorbed)
+            target_df[f'{corner}_knockdown_ratio'] = target_df[f'{corner}_knockdowns_landed'] / target_df[
+                f'{corner}_knockdowns_absorbed'].where(target_df[f'{corner}_knockdowns_absorbed'] > 0, 1)
+
+            # damage efficiency (knockdowns per strike landed)
+            target_df[f'{corner}_damage_efficiency'] = target_df[f'{corner}_knockdowns_landed'] / target_df[
+                f'{corner}_strikes_landed'].where(target_df[f'{corner}_strikes_landed'] > 0, 1)
+
+            # head strike damage ratio
+            target_df[f'{corner}_head_strike_damage_ratio'] = target_df[f'{corner}_head_strikes_landed'] / target_df[
+                f'{corner}_strikes_landed'].where(target_df[f'{corner}_strikes_landed'] > 0, 1)
+
+        # damage differentials
+        target_df['knockdown_ratio_diff'] = target_df['red_knockdown_ratio'] - target_df['blue_knockdown_ratio']
+        target_df['damage_efficiency_diff'] = target_df['red_damage_efficiency'] - target_df['blue_damage_efficiency']
+        target_df['head_strike_damage_ratio_diff'] = target_df['red_head_strike_damage_ratio'] - target_df['blue_head_strike_damage_ratio']
+
         return target_df
 
     def scale_features(self, df: pd.DataFrame) -> pd.DataFrame:
