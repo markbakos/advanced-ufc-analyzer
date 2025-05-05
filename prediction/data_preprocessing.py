@@ -805,28 +805,9 @@ class UFCFightsPreprocessor:
         numeric_columns = df.select_dtypes(include=['int64', 'float64']).columns
         numeric_columns = [col for col in numeric_columns if col not in exclude_columns]
 
-        # identify round-specific columns
-        round_columns = [col for col in numeric_columns if any(f'_rd{round_num}' in col for round_num in range(1, 6))]
-        non_round_numeric_columns = [col for col in numeric_columns if col not in round_columns]
-
-        # scale non-round-specific features
-        if len(non_round_numeric_columns) > 0:
-            scaler = StandardScaler()
-            df[non_round_numeric_columns] = scaler.fit_transform(df[non_round_numeric_columns])
-            self.scalers['numeric'] = scaler
-        
-        # scale round-specific features separately for each round
-        for round_num in range(1, 6):
-            round_cols = [col for col in round_columns if f'_rd{round_num}' in col]
-            if len(round_cols) > 0:
-                round_mask = df['round'] >= round_num
-                
-                # only scale features for rounds that occurred
-                if round_mask.any():
-                    scaler = StandardScaler()
-                    temp_df = df.loc[round_mask, round_cols].copy()
-                    df.loc[round_mask, round_cols] = scaler.fit_transform(temp_df)
-                    self.scalers[f'round_{round_num}'] = scaler
+        scaler = StandardScaler()
+        df[numeric_columns] = scaler.fit_transform(df[numeric_columns])
+        self.scalers['numeric'] = scaler
         
         return df
 
@@ -864,19 +845,8 @@ class UFCFightsPreprocessor:
         self.output_df = self.engineer_features(self.output_df)
 
         self.output_df = self.mirror_data(self.output_df)
-        
-        # # handle round data first to avoid issues with missing values
-        # fights_df = self.handle_round_data(fights_df)
-        
-        # # apply preprocessing steps
-        # fights_df = self.engineer_features(fights_df)
 
-        # mirror data
-        # fights_df = self.mirror_data(fights_df)
-
-        # fights_df = self.encode_categorical(fights_df)
-        # fights_df = self.scale_features(fights_df)
-        # fights_df = self.remove_bias(fights_df)
+        self.output_df = self.scale_features(self.output_df)
 
         target = fights_df['result'].copy()
         
