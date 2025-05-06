@@ -7,7 +7,7 @@ class DataSplit:
     """
     Class to split the dataset into train, validation and test sets
     """
-    def __init__(self, features_path: str = './processed_fights_features.csv', target_path: str = './processed_fights_target.csv'):
+    def __init__(self, features_path: str = './data/processed/processed_fights_features.csv', target_path: str = './data/processed/processed_fights_target.csv'):
         """
         Initialize the DataSplit class
         """
@@ -53,7 +53,6 @@ class DataSplit:
             'final_val_indices': final_val_indices,
             'final_test_indices': final_test_indices
         }
-
 
     def save_data_split(self, data_split_indices: dict):
         """
