@@ -354,15 +354,17 @@ class UFCFightsPreprocessor:
             'blue': 'red'
         }
 
-        # convert df to dict
-        fight_dict = fight_df.set_index('fight_id').to_dict('index')
 
-        # initialize results dictionary to store calculated values
-        results = {}
+        # pre initialize all columns in target_df
+
+        for corner in ['red', 'blue']:
+            for column in strike_columns:
+                target_df[f'{corner}_{column}'] = 0
+            for column in strike_columns:
+                target_df[f'{corner}_{column}_opponent'] = 0
+
 
         for idx, fight in fight_df.iterrows():
-
-            results[idx] = {}
 
             # test:
             # if fight['fight_id'] == "d3be5a4e0ec273e2":
@@ -384,25 +386,30 @@ class UFCFightsPreprocessor:
             # get all strikes for red fighter using previous red_fights
             for fight_id, corner in red_fights:
                 for column in strike_columns:
-                    red_fighter_stats[column] += fight_dict[fight_id][f'{corner}_{column}']
+                    red_fighter_stats[column] += fight_df.loc[fight_df['fight_id'] == fight_id, f'{corner}_{column}'].values[0]
 
                 for column in strike_columns:
-                    red_fighter_stats[f'{column}_opponent'] += fight_dict[fight_id][f'{opponent_corner[corner]}_{column}']
+                    red_fighter_stats[f'{column}_opponent'] += fight_df.loc[fight_df['fight_id'] == fight_id, f'{opponent_corner[corner]}_{column}'].values[0]
 
             for fight_id, corner in blue_fights:
                 for column in strike_columns:
-                    blue_fighter_stats[column] += fight_dict[fight_id][f'{corner}_{column}']
+                    blue_fighter_stats[column] += fight_df.loc[fight_df['fight_id'] == fight_id, f'{corner}_{column}'].values[0]
 
                 for column in strike_columns:
-                    blue_fighter_stats[f'{column}_opponent'] += fight_dict[fight_id][f'{opponent_corner[corner]}_{column}']
+                    blue_fighter_stats[f'{column}_opponent'] += fight_df.loc[fight_df['fight_id'] == fight_id, f'{opponent_corner[corner]}_{column}'].values[0]
 
             # save data in results dict
             for column in strike_columns:
-                results[idx][f'red_{column}'] = red_fighter_stats[column]
-                results[idx][f'red_{column}_opponent'] = red_fighter_stats[f'{column}_opponent']
+                target_df.at[idx, f'red_{column}'] = red_fighter_stats[column]
 
-                results[idx][f'blue_{column}'] = blue_fighter_stats[column]
-                results[idx][f'blue_{column}_opponent'] = blue_fighter_stats[f'{column}_opponent']
+            for column in strike_columns:
+                target_df.at[idx, f'red_{column}_opponent'] = red_fighter_stats[f'{column}_opponent']
+
+            for column in strike_columns:
+                target_df.at[idx, f'blue_{column}'] = blue_fighter_stats[column]
+
+            for column in strike_columns:
+                target_df.at[idx, f'blue_{column}_opponent'] = blue_fighter_stats[f'{column}_opponent']
 
             #
             # if fight['fight_id'] == "d3be5a4e0ec273e2":
@@ -411,12 +418,7 @@ class UFCFightsPreprocessor:
 
             if idx % 100 == 0 and idx > 0:
                 logger.info(f"Processed {idx} fights...")
-                return target_df
-
-            #convert results back  to df
-            for idx, values in results.items():
-                for col, val in values.items():
-                    target_df.at[idx, col] = val
+                # return target_df
 
         return target_df
     
