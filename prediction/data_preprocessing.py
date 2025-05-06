@@ -839,8 +839,11 @@ class UFCFightsPreprocessor:
         # fights = self._get_fights_date_limited(fighter_history, 'e1248941344b3288', datetime.datetime.strptime('2025-04-12', '%Y-%m-%d'))
         # print(fights)
 
-        self.output_df = pd.DataFrame({'total_rounds': fights_df['total_rounds']})
-        
+        self.output_df = pd.DataFrame({
+            'result': fights_df['result'],
+            'total_rounds': fights_df['total_rounds'],
+            })
+
         self.output_df = self.copy_fighter_stats(self.output_df, fights_df)
         self.output_df = self.calculate_career_stats(self.output_df, fights_df)
         self.output_df = self.get_all_strike_data(self.output_df, fights_df)
@@ -850,10 +853,10 @@ class UFCFightsPreprocessor:
 
         self.output_df = self.scale_features(self.output_df)
 
-        target = fights_df['result'].copy()
+        target = self.output_df['result'].copy()
         
-        if 'result' in fights_df.columns:
-            fights_df = fights_df.drop(columns=['result'])
+        if 'result' in self.output_df.columns:
+            self.output_df = self.output_df.drop(columns=['result'])
 
         self._save_data(target)
         
