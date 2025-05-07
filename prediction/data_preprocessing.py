@@ -19,7 +19,7 @@ class UFCFightsPreprocessor:
     Handles missing values, date columns and feature engineering
     """
     
-    def __init__(self, fights_path: str = 'fights.csv',
+    def __init__(self, fights_path: str = '../scraper/fights/spiders/fights.csv',
                  fighters_path: str = 'fighters.csv',
                  output_dir: str = 'data/processed'):
         """
@@ -380,10 +380,10 @@ class UFCFightsPreprocessor:
     def engineer_features(self, target_df: pd.DataFrame) -> pd.DataFrame:
         """
         Create new features for prediction
-        
+
         Args:
             df: DataFrame
-            
+
         Returns:
             DataFrame with engineered features
         """
@@ -779,8 +779,6 @@ class UFCFightsPreprocessor:
             'result': fights_df['result'],
             'total_rounds': fights_df['total_rounds'],
             })
-
-
 
         self.output_df = self.copy_fighter_stats(self.output_df, fights_df)
         self.output_df = self.calculate_career_stats(self.output_df, fights_df)
