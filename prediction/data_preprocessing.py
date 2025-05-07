@@ -203,7 +203,9 @@ class UFCFightsPreprocessor:
                 '_avg_strikes_absorbed', '_avg_takedowns_landed',
                 '_avg_takedowns_absorbed','_avg_submission_attempts_landed',
                 '_avg_submission_attempts_absorbed', '_avg_fight_time_min',
-                '_last_fight_days_since'
+                '_last_fight_days_since',
+
+                '_height_cm', '_weight_kg', '_reach_cm', '_stance'
             ]
 
         for corner in ['red', 'blue']:
@@ -290,7 +292,6 @@ class UFCFightsPreprocessor:
             'blue': 'red'
         }
 
-
         # pre initialize all columns in target_df
 
         for corner in ['red', 'blue']:
@@ -298,7 +299,6 @@ class UFCFightsPreprocessor:
                 target_df[f'{corner}_{column}'] = 0
             for column in strike_columns:
                 target_df[f'{corner}_{column}_opponent'] = 0
-
 
         for idx, fight in fight_df.iterrows():
 
@@ -779,6 +779,8 @@ class UFCFightsPreprocessor:
             'result': fights_df['result'],
             'total_rounds': fights_df['total_rounds'],
             })
+
+
 
         self.output_df = self.copy_fighter_stats(self.output_df, fights_df)
         self.output_df = self.calculate_career_stats(self.output_df, fights_df)
