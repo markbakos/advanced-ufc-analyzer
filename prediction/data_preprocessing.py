@@ -857,12 +857,12 @@ class UFCFightsPreprocessor:
         
         if 'result' in self.output_df.columns:
             self.output_df = self.output_df.drop(columns=['result'])
-
-        self._save_data(target)
         
         le = LabelEncoder()
         target = pd.Series(le.fit_transform(target.astype(str)), index=target.index)
         self.label_encoders['result'] = le
+
+        self._save_data(target)
         
         # create preprocessing artifacts dictionary
         artifacts = {
