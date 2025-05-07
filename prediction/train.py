@@ -2,7 +2,7 @@ import json
 import pandas as pd
 import os
 from keras import callbacks
-from model import prediction_model
+from prediction.models.model import prediction_model
 from evaluate import evaluate_model
 
 def train_model():

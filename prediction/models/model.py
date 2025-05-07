@@ -1,9 +1,6 @@
 import keras
 from keras import layers
-import numpy as np
-from keras.src.backend import backend
 import tensorflow as tf
-
 
 def prediction_model(n_features, n_classes):
     """
