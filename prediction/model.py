@@ -1,6 +1,9 @@
 import keras
 from keras import layers
 import numpy as np
+from keras.src.backend import backend
+import tensorflow as tf
+
 
 def prediction_model(n_features, n_classes):
     """
@@ -10,10 +13,10 @@ def prediction_model(n_features, n_classes):
     # create input layer
     inputs = keras.Input(shape=(n_features,))
 
-    masked_inputs = layers.Masking(mask_value=np.nan)(inputs)
+    x = layers.Lambda(lambda x: tf.where( tf.math.is_nan(x), tf.zeros_like(x), x))(inputs)
 
     # create dense layers
-    x = layers.Dense(128, activation='relu',  kernel_initializer='he_normal', kernel_regularizer=keras.regularizers.l2(0.001))(masked_inputs)
+    x = layers.Dense(128, activation='relu',  kernel_initializer='he_normal', kernel_regularizer=keras.regularizers.l2(0.001))(x)
     x = layers.BatchNormalization()(x)
     x = layers.Dropout(0.3)(x)
 
