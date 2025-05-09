@@ -13,6 +13,8 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - '
                                                '%(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
+TEST_RUN = False
+
 class UFCFightsPreprocessor:
     """
     Preprocessing fight data for training model
@@ -354,7 +356,8 @@ class UFCFightsPreprocessor:
 
             if idx % 100 == 0 and idx > 0:
                 logger.info(f"Processed {idx} fights...")
-                # return target_df
+                if TEST_RUN:
+                    break
 
         return target_df
     
