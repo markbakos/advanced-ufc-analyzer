@@ -370,16 +370,16 @@ class UFCFightsPreprocessor:
 
             # save data in results dict
             for column in strike_columns:
-                target_df.at[idx, f'red_{column}'] = red_fighter_stats[column]
+                target_df.loc[idx, f'red_{column}'] = red_fighter_stats[column]
 
             for column in strike_columns:
-                target_df.at[idx, f'red_{column}_opponent'] = red_fighter_stats[f'{column}_opponent']
+                target_df.loc[idx, f'red_{column}_opponent'] = red_fighter_stats[f'{column}_opponent']
 
             for column in strike_columns:
-                target_df.at[idx, f'blue_{column}'] = blue_fighter_stats[column]
+                target_df.loc[idx, f'blue_{column}'] = blue_fighter_stats[column]
 
             for column in strike_columns:
-                target_df.at[idx, f'blue_{column}_opponent'] = blue_fighter_stats[f'{column}_opponent']
+                target_df.loc[idx, f'blue_{column}_opponent'] = blue_fighter_stats[f'{column}_opponent']
 
             #
             # if fight['fight_id'] == "d3be5a4e0ec273e2":
