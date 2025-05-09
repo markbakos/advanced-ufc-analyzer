@@ -19,7 +19,7 @@ from scraper.fighters.extractors import extract_career_statistics, extract_fight
 LOGGER = logging.getLogger(__name__)
 
 # FOR TESTING, ONLY ONE PAGE
-TEST_RUN = True
+TEST_RUN = False
 
 MAX_CONCURRENT_REQUESTS = 5
 
