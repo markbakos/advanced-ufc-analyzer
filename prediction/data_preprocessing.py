@@ -13,7 +13,7 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - '
                                                '%(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
-TEST_RUN = False
+TEST_RUN = True
 
 class UFCFightsPreprocessor:
     """
@@ -95,7 +95,8 @@ class UFCFightsPreprocessor:
 
         date_columns = [
             'career_red_last_fight_date', 'career_blue_last_fight_date',
-            'career_red_last_win_date', 'career_blue_last_win_date', 'event_date'
+            'career_red_last_win_date', 'career_blue_last_win_date', 'event_date',
+            'career_red_date_of_birth', 'career_blue_date_of_birth',
         ]
 
         for col in date_columns:
@@ -108,6 +109,12 @@ class UFCFightsPreprocessor:
                 days_since_col = col.replace('date', 'days_since')
                 df_processed[days_since_col] = (df_processed['event_date'] - df_processed[col]).dt.days
                 df_processed[days_since_col] = df_processed[days_since_col].apply(lambda x: np.nan if pd.isna(x) or x < 0 else x)
+
+        for col in ['career_red_date_of_birth', 'career_blue_date_of_birth']:
+            if col in df_processed.columns:
+                age_col = col.replace('date_of_birth', 'age_in_days')
+                df_processed[age_col] = (df_processed['event_date'] - df_processed[col]).dt.days
+                df_processed[age_col] = df_processed[age_col].apply(lambda x: np.nan if pd.isna(x) or x < 0 else x)
 
         return df_processed
 
@@ -207,7 +214,7 @@ class UFCFightsPreprocessor:
                 '_avg_submission_attempts_absorbed', '_avg_fight_time_min',
                 '_last_fight_days_since',
 
-                '_height_cm', '_weight_kg', '_reach_cm', '_stance'
+                '_height_cm', '_weight_kg', '_reach_cm', '_stance', '_age_in_days'
             ]
 
         for corner in ['red', 'blue']:
