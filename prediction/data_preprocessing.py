@@ -391,6 +391,10 @@ class UFCFightsPreprocessor:
                 if TEST_RUN:
                     break
 
+        # final check for nan values and replace with 0
+        strike_related_columns = [col for col in target_df.columns if any(x in col for x in strike_columns.keys())]
+        target_df[strike_related_columns] = target_df[strike_related_columns].fillna(0)
+
         return target_df
     
     def calculate_career_stats(self, target_df: pd.DataFrame, fight_df: pd.DataFrame) -> pd.DataFrame:
