@@ -204,15 +204,20 @@ class UFCFightsSpider:
         Returns:
             HTML content as string or None if request fails
         """
-        try:
-            LOGGER.info(f"Fetching page: {url}")
-            async with self.session.get(url) as response:
-                if response.status == 200:
-                    return await response.text()
-                response.raise_for_status()
-        except Exception as e:
-            LOGGER.error(f"Error fetching page {url}: {e}")
-            return None
+        while True:
+            try:
+                LOGGER.info(f"Fetching page: {url}")
+                async with self.session.get(url) as response:
+                    if response.status == 200:
+                        return await response.text()
+                    elif 500 <= response.status < 600:
+                        LOGGER.warning(f"Server error {response.status} for URL: {url}. Retrying...")
+                        await asyncio.sleep(5)
+                    else:
+                        response.raise_for_status()
+            except Exception as e:
+                LOGGER.error(f"Error fetching page {url}: {e}")
+                return None
     
     async def extract_event_page_links(self, html: str) -> Set[str]:
         """
