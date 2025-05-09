@@ -281,6 +281,10 @@ class UFCFightsPreprocessor:
         """
         logger.info("Getting all strike data...")
 
+        if len(target_df) != len(fight_df):
+            logger.warning("Target dataframe length doesn't match fight dataframe length, adjusting...")
+            target_df = target_df.reindex(fight_df.index)
+
         strike_columns = {
             'head_strikes_landed': 0,
             'head_strikes_thrown': 0,
@@ -302,7 +306,6 @@ class UFCFightsPreprocessor:
         }
 
         # pre initialize all columns in target_df
-
         for corner in ['red', 'blue']:
             for column in strike_columns:
                 target_df[f'{corner}_{column}'] = 0
@@ -330,18 +333,40 @@ class UFCFightsPreprocessor:
 
             # get all strikes for red fighter using previous red_fights
             for fight_id, corner in red_fights:
-                for column in strike_columns:
-                    red_fighter_stats[column] += fight_df.loc[fight_df['fight_id'] == fight_id, f'{corner}_{column}'].values[0]
+                try:
+                    fight_row = fight_df.loc[fight_df['fight_id'] == fight_id]
+                    if not fight_row.empty:
+                        for column in strike_columns:
+                            if f'{corner}_{column}' in fight_row.columns:
+                                value = fight_row[f'{corner}_{column}'].values[0]
+                                if pd.notna(value):
+                                    red_fighter_stats[column] += value
 
-                for column in strike_columns:
-                    red_fighter_stats[f'{column}_opponent'] += fight_df.loc[fight_df['fight_id'] == fight_id, f'{opponent_corner[corner]}_{column}'].values[0]
+                        for column in strike_columns:
+                            if f'{opponent_corner[corner]}_{column}' in fight_row.columns:
+                                value = fight_row[f'{opponent_corner[corner]}_{column}'].values[0]
+                                if pd.notna(value):
+                                    red_fighter_stats[f'{column}_opponent'] += value
+                except Exception as e:
+                    logger.error(f"Error processing red fighter's previous fight {fight_id}: {e}")
 
             for fight_id, corner in blue_fights:
-                for column in strike_columns:
-                    blue_fighter_stats[column] += fight_df.loc[fight_df['fight_id'] == fight_id, f'{corner}_{column}'].values[0]
+                try:
+                    fight_row = fight_df.loc[fight_df['fight_id'] == fight_id]
+                    if not fight_row.empty:
+                        for column in strike_columns:
+                            if f'{corner}_{column}' in fight_row.columns:
+                                value = fight_row[f'{corner}_{column}'].values[0]
+                                if pd.notna(value):
+                                    blue_fighter_stats[column] += value
 
-                for column in strike_columns:
-                    blue_fighter_stats[f'{column}_opponent'] += fight_df.loc[fight_df['fight_id'] == fight_id, f'{opponent_corner[corner]}_{column}'].values[0]
+                        for column in strike_columns:
+                            if f'{opponent_corner[corner]}_{column}' in fight_row.columns:
+                                value = fight_row[f'{opponent_corner[corner]}_{column}'].values[0]
+                                if pd.notna(value):
+                                    blue_fighter_stats[f'{column}_opponent'] += value
+                except Exception as e:
+                    logger.error(f"Error processing blue fighter's previous fight {fight_id}: {e}")
 
             # save data in results dict
             for column in strike_columns:
