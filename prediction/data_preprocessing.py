@@ -489,6 +489,31 @@ class UFCFightsPreprocessor:
         
         return df
 
+    def categorize_features(self, df: pd.DataFrame) -> pd.DataFrame:
+        """
+        Categorize features using LabelEncoder
+
+        Args:
+            df: Input DataFrame
+
+        Returns:
+            DataFrame with categorized features
+        """
+        logger.info("Categorizing features...")
+
+        # columns to categorize
+        columns = ['total_rounds', 'red_stance', 'blue_stance']
+
+        # get categorical columns
+        categorical_columns = [col for col in columns if col in df.columns]
+
+        for col in categorical_columns:
+            le = LabelEncoder()
+            df[col] = le.fit_transform(df[col])
+            self.label_encoders[col] = le
+
+        return df
+
     def prepare_data(self) -> Tuple[pd.DataFrame, pd.Series, Dict[str, Any]]:
         """
         Prepare the data applying every preprocessing step.
@@ -528,6 +553,7 @@ class UFCFightsPreprocessor:
         self.output_df = self.mirror_data(self.output_df)
 
         self.output_df = self.scale_features(self.output_df)
+        self.output_df = self.categorize_features(self.output_df)
 
         target = self.output_df['result'].copy()
         
