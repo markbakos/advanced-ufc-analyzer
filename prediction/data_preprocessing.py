@@ -162,7 +162,20 @@ class UFCFightsPreprocessor:
                 df_processed[col] = df_processed[col].apply(convert_time_to_seconds)
 
         return df_processed
-    
+
+    def remove_unneeded_rows(self, df: pd.DataFrame) -> pd.DataFrame:
+        """
+        Remove UNKNOWN (NC / Unknown) and Draw result fights
+        """
+
+        logger.info("Removing unneeded fights")
+
+        df_processed = df.copy()
+
+        df_processed = df_processed[~df_processed['result'].isin(['draw', 'unknown'])]
+
+        return df_processed
+
     def handle_missing_values(self, df: pd.DataFrame) -> pd.DataFrame:
         """
         Handle missing values in the dataset
@@ -497,12 +510,12 @@ class UFCFightsPreprocessor:
             'total_rounds': fights_df['total_rounds'],
             })
 
+        self.output_df = self.remove_unneeded_rows(self.output_df)
         self.output_df = self.handle_missing_values(self.output_df)
         self.output_df = self.copy_fighter_stats(self.output_df, fights_df)
         self.output_df = self.calculate_career_stats(self.output_df, fights_df)
-        self.output_df = self.get_all_strike_data(self.output_df, fights_df)
-        self.output_df = engineer_features(self.output_df)
-        self.output_df = self.handle_missing_values(self.output_df)
+        # self.output_df = self.get_all_strike_data(self.output_df, fights_df)
+        # self.output_df = engineer_features(self.output_df)
 
         self.output_df = self.scale_features(self.output_df)
         self.output_df = self.categorize_features(self.output_df)
