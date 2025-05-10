@@ -429,6 +429,54 @@ class UFCFightsPreprocessor:
 
         return target_df
 
+    def mirror_data(self, df: pd.DataFrame) -> pd.DataFrame:
+        """
+        Mirror the data to create a balanced dataset
+        """
+        logger.info("Mirroring data...")
+
+        # create a copy of the dataframe to avoid modifying the original
+        df_processed = df.copy()
+
+        red_columns = [col for col in df_processed.columns if 'red' in col]
+        blue_columns = [col for col in df_processed.columns if 'blue' in col]
+
+        red_to_blue = {col: col.replace('red', 'blue') for col in red_columns}
+        blue_to_red = {col: col.replace('blue', 'red') for col in blue_columns}
+
+        swapped_df = df_processed.rename(columns={**red_to_blue, **blue_to_red})
+
+        # columns = {
+        #     'experience_diff', 'win_rate_diff', 'takedown_diff', 'total_strike_diff',
+        #     'total_strike_diff_per_round', 'total_strike_diff_per_minute',
+        #     'total_head_strike_diff', 'total_body_strike_diff',
+        #     'total_leg_strike_diff', 'distance_strike_diff', 'clinch_strike_diff',
+        #     'ground_strike_diff', 'head_accuracy_diff', 'body_accuracy_diff',
+        #     'leg_accuracy_diff', 'distance_accuracy_diff', 'clinch_accuracy_diff',
+        #     'ground_accuracy_diff', 'strike_efficiency_diff', 'finish_rate_diff',
+        #     'ko_rate_diff', 'sub_rate_diff', 'decision_rate_diff', 'strike_volume_diff',
+        #     'sub_attempt_frequency_diff', 'striking_preference_diff',
+        #     'grappling_preference_diff', 'ground_preference_diff',
+        #     'distance_preference_diff', 'knockdown_ratio_diff',
+        #     'damage_efficiency_diff', 'head_strike_damage_ratio_diff',
+        #     'avg_fight_length_diff', 'fight_pace_diff', 'head_strike_defense_diff',
+        #     'body_strike_defense_diff', 'leg_strike_defense_diff',
+        #     'overall_striking_effectiveness_diff', 'overall_grappling_effectiveness_diff',
+        #     'durability_diff',
+        # }
+        #
+        # for col in columns:
+        #     if col in swapped_df.columns:
+        #         swapped_df[col] = swapped_df[col] * -1
+        #
+        if 'result' in df_processed.columns:
+            swapped_df['result'] = swapped_df['result'].map({"red": "blue", "blue": "red"})
+
+        # combine original and mirrored data
+        combined_df = pd.concat([df_processed, swapped_df], ignore_index=True)
+
+        return combined_df
+
     def scale_features(self, df: pd.DataFrame) -> pd.DataFrame:
         """
         Scale numerical features using StandardScaler
@@ -516,6 +564,8 @@ class UFCFightsPreprocessor:
         self.output_df = self.calculate_career_stats(self.output_df, fights_df)
         # self.output_df = self.get_all_strike_data(self.output_df, fights_df)
         # self.output_df = engineer_features(self.output_df)
+
+        self.output_df = self.mirror_data(self.output_df)
 
         self.output_df = self.scale_features(self.output_df)
         self.output_df = self.categorize_features(self.output_df)
