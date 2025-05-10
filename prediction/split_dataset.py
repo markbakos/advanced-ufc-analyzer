@@ -22,9 +22,8 @@ class DataSplit:
         Split the dataset into train, validation and test indices
         """
         total_samples = len(self.features_df)
-        half_samples = total_samples // 2
-        
-        original_indices = np.arange(0, half_samples)
+
+        original_indices = np.arange(0, total_samples)
 
         train_indices, temp_indices = train_test_split(
             original_indices,
@@ -40,18 +39,10 @@ class DataSplit:
             stratify=self.target[temp_indices] if len(temp_indices) == len(self.target) else None
         )
 
-        mirrored_train_indices = train_indices + half_samples
-        mirrored_val_indices = val_indices + half_samples
-        mirrored_test_indices = test_indices + half_samples
-        
-        final_train_indices = np.concatenate((train_indices, mirrored_train_indices))
-        final_val_indices = np.concatenate((val_indices, mirrored_val_indices))
-        final_test_indices = np.concatenate((test_indices, mirrored_test_indices))
-
         return {
-            'final_train_indices': final_train_indices,
-            'final_val_indices': final_val_indices,
-            'final_test_indices': final_test_indices
+            'final_train_indices': train_indices,
+            'final_val_indices': val_indices,
+            'final_test_indices': test_indices
         }
 
     def save_data_split(self, data_split_indices: dict):
