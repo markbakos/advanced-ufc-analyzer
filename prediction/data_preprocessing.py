@@ -562,7 +562,7 @@ class UFCFightsPreprocessor:
         self.output_df = self.handle_missing_values(self.output_df)
         self.output_df = self.copy_fighter_stats(self.output_df, fights_df)
         self.output_df = self.calculate_career_stats(self.output_df, fights_df)
-        # self.output_df = self.get_all_strike_data(self.output_df, fights_df)
+        self.output_df = self.get_all_strike_data(self.output_df, fights_df)
         # self.output_df = engineer_features(self.output_df)
 
         self.output_df = self.mirror_data(self.output_df)
