@@ -446,29 +446,29 @@ class UFCFightsPreprocessor:
 
         swapped_df = df_processed.rename(columns={**red_to_blue, **blue_to_red})
 
-        # columns = {
-        #     'experience_diff', 'win_rate_diff', 'takedown_diff', 'total_strike_diff',
-        #     'total_strike_diff_per_round', 'total_strike_diff_per_minute',
-        #     'total_head_strike_diff', 'total_body_strike_diff',
-        #     'total_leg_strike_diff', 'distance_strike_diff', 'clinch_strike_diff',
-        #     'ground_strike_diff', 'head_accuracy_diff', 'body_accuracy_diff',
-        #     'leg_accuracy_diff', 'distance_accuracy_diff', 'clinch_accuracy_diff',
-        #     'ground_accuracy_diff', 'strike_efficiency_diff', 'finish_rate_diff',
-        #     'ko_rate_diff', 'sub_rate_diff', 'decision_rate_diff', 'strike_volume_diff',
-        #     'sub_attempt_frequency_diff', 'striking_preference_diff',
-        #     'grappling_preference_diff', 'ground_preference_diff',
-        #     'distance_preference_diff', 'knockdown_ratio_diff',
-        #     'damage_efficiency_diff', 'head_strike_damage_ratio_diff',
-        #     'avg_fight_length_diff', 'fight_pace_diff', 'head_strike_defense_diff',
-        #     'body_strike_defense_diff', 'leg_strike_defense_diff',
-        #     'overall_striking_effectiveness_diff', 'overall_grappling_effectiveness_diff',
-        #     'durability_diff',
-        # }
-        #
-        # for col in columns:
-        #     if col in swapped_df.columns:
-        #         swapped_df[col] = swapped_df[col] * -1
-        #
+        columns = {
+            'experience_diff', 'win_rate_diff', 'takedown_diff', 'total_strike_diff',
+            'total_strike_diff_per_round', 'total_strike_diff_per_minute',
+            'total_head_strike_diff', 'total_body_strike_diff',
+            'total_leg_strike_diff', 'distance_strike_diff', 'clinch_strike_diff',
+            'ground_strike_diff', 'head_accuracy_diff', 'body_accuracy_diff',
+            'leg_accuracy_diff', 'distance_accuracy_diff', 'clinch_accuracy_diff',
+            'ground_accuracy_diff', 'strike_efficiency_diff', 'finish_rate_diff',
+            'ko_rate_diff', 'sub_rate_diff', 'decision_rate_diff', 'strike_volume_diff',
+            'sub_attempt_frequency_diff', 'striking_preference_diff',
+            'grappling_preference_diff', 'ground_preference_diff',
+            'distance_preference_diff', 'knockdown_ratio_diff',
+            'damage_efficiency_diff', 'head_strike_damage_ratio_diff',
+            'avg_fight_length_diff', 'fight_pace_diff', 'head_strike_defense_diff',
+            'body_strike_defense_diff', 'leg_strike_defense_diff',
+            'overall_striking_effectiveness_diff', 'overall_grappling_effectiveness_diff',
+            'durability_diff',
+        }
+
+        for col in columns:
+            if col in swapped_df.columns:
+                swapped_df[col] = swapped_df[col] * -1
+
         if 'result' in df_processed.columns:
             swapped_df['result'] = swapped_df['result'].map({"red": "blue", "blue": "red"})
 
@@ -563,7 +563,7 @@ class UFCFightsPreprocessor:
         self.output_df = self.copy_fighter_stats(self.output_df, fights_df)
         self.output_df = self.calculate_career_stats(self.output_df, fights_df)
         self.output_df = self.get_all_strike_data(self.output_df, fights_df)
-        # self.output_df = engineer_features(self.output_df)
+        self.output_df = engineer_features(self.output_df)
 
         self.output_df = self.mirror_data(self.output_df)
 
