@@ -22,17 +22,14 @@ class UFCFightsPreprocessor:
     """
     
     def __init__(self, fights_path: str = '../scraper/fights/spiders/fights.csv',
-                 fighters_path: str = 'fighters.csv',
                  output_dir: str = 'data/processed'):
         """
         Initialize the preprocessor with paths to data files.
         
         Args:
             fights_path: Path to the fights CSV file
-            fighters_path: Path to the fighters CSV file
         """
         self.fights_path = fights_path
-        self.fighters_path = fighters_path
         self.label_encoders = {}
         self.scalers = {}
 
@@ -564,6 +561,15 @@ class UFCFightsPreprocessor:
 
         self.output_df = self.remove_unneeded_rows(self.output_df)
         self.output_df = self.handle_missing_values(self.output_df)
+
+        # convert all types of Decision to "Decision" and TKO to "KO/TKO"
+        self.output_df.loc[fights_df['win_method'].str.contains("decision", na=False, case=False), 'win_method'] = "Decision"
+        self.output_df.loc[fights_df['win_method'].str.contains("tko", na=False, case=False), 'win_method'] = "KO/TKO"
+
+        # delete all fights with DQ unknown win method
+        self.output_df = self.output_df[~self.output_df['win_method'].str.contains("DQ", na=False, case=False)]
+        self.output_df = self.output_df[~self.output_df['win_method'].str.contains("Unknown", na=False, case=False)]
+
         self.output_df = self.copy_fighter_stats(self.output_df, fights_df)
         self.output_df = self.calculate_career_stats(self.output_df, fights_df)
         self.output_df = self.get_all_strike_data(self.output_df, fights_df)
