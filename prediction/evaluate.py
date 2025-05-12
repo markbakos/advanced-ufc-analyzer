@@ -22,6 +22,6 @@ def evaluate_model(model, test_features, test_target):
     print(confusion_matrix(result_target, result_pred))
 
     print("\nWin Method Prediction Metrics:")
-    print(classification_report(win_method_target, win_method_pred, zero_division=""))
+    print(classification_report(win_method_target, win_method_pred, zero_division=0.0))
     print("\nConfusion Matrix for Win Method:")
     print(confusion_matrix(win_method_target, win_method_pred))
