@@ -69,9 +69,12 @@ class UFCFightsPreprocessor:
         
         # save dataframe to csv
         self.output_df.to_csv(features_file, index=False)
-        
+
+        # ensure target_df is dataframe and convert to frame
+        if isinstance(target_df, pd.Series):
+            target_df = target_df.to_frame()
+
         # save target to csv
-        target_df = pd.DataFrame({'result': target_df})
         target_df.to_csv(target_file, index=False)
         
         logger.info(f"Processed features saved to {features_file}")
@@ -555,6 +558,7 @@ class UFCFightsPreprocessor:
 
         self.output_df = pd.DataFrame({
             'result': fights_df['result'],
+            'win_method': fights_df['win_method'],
             'total_rounds': fights_df['total_rounds'],
             })
 
@@ -574,10 +578,19 @@ class UFCFightsPreprocessor:
         
         if 'result' in self.output_df.columns:
             self.output_df = self.output_df.drop(columns=['result'])
-        
-        le = LabelEncoder()
-        target = pd.Series(le.fit_transform(target.astype(str)), index=target.index)
-        self.label_encoders['result'] = le
+
+        if 'win_method' in self.output_df.columns:
+            win_method = self.output_df['win_method'].copy()
+            self.output_df = self.output_df.drop(columns=['win_method'])
+            target = pd.concat([target, win_method], axis=1)
+
+        le_result = LabelEncoder()
+        target['result'] = pd.Series(le_result.fit_transform(target['result'].astype(str)))
+        self.label_encoders['result'] = le_result
+
+        le_win = LabelEncoder()
+        target['win_method'] = pd.Series(le_win.fit_transform(target['win_method'].astype(str)))
+        self.label_encoders['win_method'] = le_win
 
         self._save_data(target)
         
