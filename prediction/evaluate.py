@@ -6,24 +6,22 @@ def evaluate_model(model, test_features, test_target):
     Evaluate the model
     """
     # evaluate the model
-    test_loss, test_accuracy = model.evaluate(test_features, test_target)
-    print(f'Test loss: {test_loss}')
-    print(f'Test accuracy: {test_accuracy}')
     
     # get predictions
     predictions = model.predict(test_features)
-    predicted_classes = np.argmax(predictions, axis=1)
-    
-    print("\nClassification Report:")
-    print(classification_report(test_target, predicted_classes))
-    
-    print("\nConfusion Matrix:")
-    cm = confusion_matrix(test_target, predicted_classes)
-    print(cm)
-    
-    print("\nPer-class Accuracy:")
-    for i in range(len(np.unique(test_target))):
-        class_indices = np.where(test_target == i)[0]
-        if len(class_indices) > 0:
-            class_accuracy = np.mean(predicted_classes[class_indices] == test_target[class_indices])
-            print(f"Class {i}: {class_accuracy:.4f} ({np.sum(predicted_classes[class_indices] == test_target[class_indices])}/{len(class_indices)})")
+
+    result_pred = np.argmax(predictions[0], axis=1)
+    win_method_pred = np.argmax(predictions[1], axis=1)
+
+    result_target = test_target[0]
+    win_method_target = test_target[1]
+
+    print("\nResult Prediction Metrics:")
+    print(classification_report(result_target, result_pred))
+    print("\nConfusion Matrix for Result:")
+    print(confusion_matrix(result_target, result_pred))
+
+    print("\nWin Method Prediction Metrics:")
+    print(classification_report(win_method_target, win_method_pred, zero_division=""))
+    print("\nConfusion Matrix for Win Method:")
+    print(confusion_matrix(win_method_target, win_method_pred))
