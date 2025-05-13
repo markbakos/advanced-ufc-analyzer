@@ -225,7 +225,7 @@ class UFCFightsPreprocessor:
                 '_avg_strikes_absorbed', '_avg_takedowns_landed',
                 '_avg_takedowns_absorbed','_avg_submission_attempts_landed',
                 '_avg_submission_attempts_absorbed', '_avg_fight_time_min',
-                '_last_fight_days_since',
+                '_last_fight_days_since', '_last_win_days_since',
 
                 '_height_cm', '_weight_kg', '_reach_cm', '_stance', '_age_in_days'
             ]
