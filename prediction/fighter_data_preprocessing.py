@@ -1,6 +1,8 @@
 import pandas as pd
 import logging
 
+from sklearn.impute import SimpleImputer
+
 logger = logging.getLogger(__name__)
 
 class FighterDataPreprocessing:
@@ -33,6 +35,33 @@ class FighterDataPreprocessing:
 
         return df
 
+    def handle_missing_values(self, df: pd.DataFrame) -> pd.DataFrame:
+        """
+        Handle missing values in the dataset
+
+        Args:
+            df: Input DataFrame
+
+        Returns:
+            DataFrame with handled missing values
+        """
+        logger.info("Handling missing values...")
+
+        # create imputers for different types of features
+        numeric_imputer = SimpleImputer(strategy='constant', fill_value=0)
+        categorical_imputer = SimpleImputer(strategy='constant', fill_value='UNKNOWN')
+
+        # separate numeric and categorical columns
+        numeric_columns = df.select_dtypes(include=['int64', 'float64']).columns
+        categorical_columns = df.select_dtypes(include=['object']).columns
+
+        # apply imputers only to non-round-specific columns
+        if len(numeric_columns) > 0:
+            df[numeric_columns] = numeric_imputer.fit_transform(df[numeric_columns])
+        df[categorical_columns] = categorical_imputer.fit_transform(df[categorical_columns])
+
+        return df
+
     def prepare_data(self) -> pd.DataFrame:
         """
         Handles the preprocessing
@@ -45,6 +74,9 @@ class FighterDataPreprocessing:
 
         # drop unnecessary columns
         fighters_df = self.drop_unnecessary_columns(fighters_df)
+
+        # handle missing values
+        fighters_df = self.handle_missing_values(fighters_df)
 
         # save the processed data
         output_dir = "data/processed"
