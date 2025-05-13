@@ -1,3 +1,4 @@
+import numpy as np
 import pandas as pd
 import logging
 
@@ -31,9 +32,48 @@ class FighterDataPreprocessing:
         # drop unnecessary columns
         df = df.drop(columns=['fighter_id', 'fighter_name', 'nickname', 'fighter_style', 'wins', 'losses', 'draws',
                               'win_percentage', 'momentum', 'SLpM', 'str_acc', 'SApM', 'str_def', 'td_avg', 'td_acc',
-                              'td_def', 'sub_avg', 'updated_timestamp'])
+                              'td_def', 'sub_avg', 'date_of_birth', 'last_fight_date', 'last_win_date', 'updated_timestamp'])
 
         return df
+
+    def calculate_days_since(self, df: pd.DataFrame) -> pd.DataFrame:
+        """
+        Calculate days since last fight and last win and handles date columns
+
+        Args:
+            df: Input DataFrame with date columns
+
+        Returns:
+            DataFrame with days since columns
+        """
+        logger.info("Calculating days since last fight and last win...")
+
+        df_processed = df.copy()
+
+        date_columns = [
+            'last_fight_date', 'last_win_date', 'date_of_birth',
+        ]
+
+        current_date = pd.to_datetime('today')
+
+        for col in date_columns:
+            if col in df_processed.columns:
+                df_processed[col] = pd.to_datetime(df_processed[col], errors='coerce')
+
+        for col in ['last_fight_date', 'last_win_date']:
+            if col in df_processed.columns:
+                days_since_col = col.replace('date', 'days_since')
+                df_processed[days_since_col] = (current_date - df_processed[col]).dt.days
+                df_processed[days_since_col] = df_processed[days_since_col].apply(
+                    lambda x: np.nan if pd.isna(x) or x < 0 else x)
+
+        for col in ['date_of_birth']:
+            if col in df_processed.columns:
+                age_col = col.replace('date_of_birth', 'age_in_days')
+                df_processed[age_col] = (current_date - df_processed[col]).dt.days
+                df_processed[age_col] = df_processed[age_col].apply(lambda x: np.nan if pd.isna(x) or x < 0 else x)
+
+        return df_processed
 
     def handle_missing_values(self, df: pd.DataFrame) -> pd.DataFrame:
         """
@@ -71,6 +111,9 @@ class FighterDataPreprocessing:
 
         # load data
         fighters_df = self.load_data()
+
+        # calculate days since dates
+        fighters_df = self.calculate_days_since(fighters_df)
 
         # drop unnecessary columns
         fighters_df = self.drop_unnecessary_columns(fighters_df)
