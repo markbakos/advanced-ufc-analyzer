@@ -32,6 +32,16 @@ class UFCPredictor:
             print(f"Fighter data file not found at {self.data_dir}/processed_fighters.csv")
             raise FileNotFoundError
 
+    def find_fighter(self, fighter_id, fighter_data):
+        """Find a fighter in the dataset by id."""
+        matches = fighter_data[fighter_data['fighter_id'].str.contains(fighter_id)]
+
+        try:
+            return matches.iloc[0]
+        except ValueError:
+            print(f"Fighter {fighter_id} not found in the dataset.")
+            return None
+
     def prepare_prediction_data(self, red_fighter, blue_fighter):
         """
         Prepare the data for prediction by combining red and blue fighter data.
@@ -221,3 +231,20 @@ class UFCPredictor:
         self.model = self.load_model()
         fighter_data = self.load_fighter_data()
 
+        # find fighters
+        fighter1 = self.find_fighter("e5549c82bfb5582d", fighter_data) # Alex Pereira
+        fighter2 = self.find_fighter("4126a78111c0855a", fighter_data) # Caio Borralho
+
+        # if atleast one fighter not found
+        if not fighter1 or not fighter2:
+            print("Can't make prediction without both fighter data")
+            return
+
+        print(fighter1)
+
+        # prepare prediction
+        prediction_data = self.prepare_prediction_data(fighter1, fighter2)
+
+if __name__ == '__main__':
+    predictor = UFCPredictor()
+    predictor.main()
