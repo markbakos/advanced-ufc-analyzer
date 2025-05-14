@@ -204,6 +204,25 @@ class FighterDataPreprocessing:
 
         return target_df
 
+    def calculate_per_time_stats(self, target_df: pd.DataFrame) -> pd.DataFrame:
+        """
+        Calculate per minute and per round career stats
+        """
+
+        logger.info("Calculating fighter career stats...")
+
+        columns = [
+            'knockdowns_landed', 'knockdowns_absorbed', 'strikes_landed', 'strikes_absorbed',
+            'takedowns_landed', 'takedowns_absorbed', 'sub_attempts_landed', 'sub_attempts_absorbed',
+        ]
+
+        for corner in ['red', 'blue']:
+            for col in columns:
+                target_df[f'{col}_per_minute'] = target_df[col] / target_df[f'total_time_minutes'].where(target_df[f'total_time_minutes'] > 0, 1)
+                target_df[f'{col}_per_round'] = target_df[col] / target_df[f'total_rounds'].where(target_df[f'total_rounds'] > 0, 1)
+
+        return target_df
+
     def prepare_data(self) -> pd.DataFrame:
         """
         Handles the preprocessing
@@ -221,10 +240,13 @@ class FighterDataPreprocessing:
         # calculate days since dates
         fighters_df = self.calculate_days_since(fighters_df)
 
+        # get all strike data
         fighters_df = self.get_all_strike_data(fighters_df, fights_df)
 
         # drop unnecessary columns
         fighters_df = self.drop_unnecessary_columns(fighters_df)
+
+        fighters_df = self.calculate_per_time_stats(fighters_df)
 
         # handle missing values
         fighters_df = self.handle_missing_values(fighters_df)
