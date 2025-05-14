@@ -174,7 +174,7 @@ class FighterDataPreprocessing:
                                     fighter_stats[column] += value
 
                         for column in strike_columns:
-                            if f'opponent_{column}' in fight_row.columns:
+                            if f'{opponent_corner[corner]}_{column}' in fight_row.columns:
                                 value = fight_row[f'{opponent_corner[corner]}_{column}'].values[0]
                                 if pd.notna(value):
                                     fighter_stats[f'{column}_opponent'] += value
