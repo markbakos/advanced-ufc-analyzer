@@ -1,10 +1,13 @@
 import numpy as np
 import pandas as pd
 import logging
-
+from typing import List, Tuple
+from data_preprocessing import UFCFightsPreprocessor
 from sklearn.impute import SimpleImputer
 
 logger = logging.getLogger(__name__)
+
+TEST_RUN = True
 
 class FighterDataPreprocessing:
     def __init__(self, fighter_path: str = "../scraper/fighters/spiders/fighters.csv", output_dir = "data/processed"):
@@ -12,6 +15,7 @@ class FighterDataPreprocessing:
         Initialize the FighterDataPreprocessing class
         """
         self.fighters_df = fighter_path
+        self.fight_history = {}
 
     def load_data(self) -> pd.DataFrame:
         """
@@ -102,6 +106,104 @@ class FighterDataPreprocessing:
 
         return df
 
+    def _get_fights_data(self, fighter_id: str) -> List[Tuple[str, str]]:
+        """
+        Get all fight ids for fighter
+
+        :param fighter_id: Fighter ID to get fights for
+        :param date_limit: Maximum date to limit the fights (Date NOT included)
+        :return: List of Tuples (fight_id, corner)
+        """
+        if fighter_id not in self.fight_history:
+            return []
+
+        fights = self.fight_history[fighter_id]
+
+        return [(fid, corner) for fid, corner, date in fights]
+
+    def get_all_strike_data(self, target_df: pd.DataFrame, fight_df: pd.DataFrame) -> pd.DataFrame:
+        """
+        Updates dataframe with all strike data for all fights
+        """
+        logger.info("Getting all strike data...")
+
+        strike_columns = {
+            'head_strikes_landed': 0,
+            'head_strikes_thrown': 0,
+            'body_strikes_landed': 0,
+            'body_strikes_thrown': 0,
+            'leg_strikes_landed': 0,
+            'leg_strikes_thrown': 0,
+            'distance_strikes_landed': 0,
+            'distance_strikes_thrown': 0,
+            'clinch_strikes_landed': 0,
+            'clinch_strikes_thrown': 0,
+            'ground_strikes_landed': 0,
+            'ground_strikes_thrown': 0,
+        }
+
+        opponent_corner = {
+            'red': 'blue',
+            'blue': 'red'
+        }
+
+        # pre initialize all columns in fighter_df
+        for column in strike_columns:
+            target_df[f'{column}'] = 0
+        for column in strike_columns:
+            target_df[f'{column}_opponent'] = 0
+
+        for idx, fighter in target_df.iterrows():
+
+            # get all up-to-date fights for fighter
+            fights = self._get_fights_data(fighter['fighter_id'])
+
+            # initialize red and blue fighters columns
+            fighter_stats = {column: 0 for column in strike_columns}
+            fighter_stats.update({f"{column}_opponent": 0 for column in strike_columns})
+
+            # get all strikes for using fights
+            for fight_id, corner in fights:
+                try:
+                    fight_row = fight_df.loc[fight_df['fight_id'] == fight_id]
+                    if not fight_row.empty:
+                        for column in strike_columns:
+                            if f'{corner}_{column}' in fight_row.columns:
+                                value = fight_row[f'{corner}_{column}'].values[0]
+                                if pd.notna(value):
+                                    fighter_stats[column] += value
+
+                        for column in strike_columns:
+                            if f'opponent_{column}' in fight_row.columns:
+                                value = fight_row[f'{opponent_corner[corner]}_{column}'].values[0]
+                                if pd.notna(value):
+                                    fighter_stats[f'{column}_opponent'] += value
+                except Exception as e:
+                    logger.error(f"Error processing fighter's fight {fight_id}: {e}")
+
+            # save data in results dict
+            for column in strike_columns:
+                target_df.loc[idx, column] = fighter_stats[column]
+
+            for column in strike_columns:
+                target_df.loc[idx, f'{column}_opponent'] = fighter_stats[f'{column}_opponent']
+
+            #
+            # if fight['fight_id'] == "d3be5a4e0ec273e2":
+            #     print(f"Red fighter: {red_fighter_strikes}")
+            #     print(f"Blue fighter: {blue_fighter_strikes}")
+
+            if idx % 100 == 0 and idx > 0:
+                logger.info(f"Processed {idx} fighters...")
+                if TEST_RUN:
+                    break
+
+        # final check for nan values and replace with 0
+        strike_related_columns = [col for col in target_df.columns if any(x in col for x in strike_columns.keys())]
+        target_df[strike_related_columns] = target_df[strike_related_columns].fillna(0)
+
+        return target_df
+
     def prepare_data(self) -> pd.DataFrame:
         """
         Handles the preprocessing
@@ -109,11 +211,17 @@ class FighterDataPreprocessing:
 
         logger.info("Preparing fighter data")
 
+        fights_preprocessor = UFCFightsPreprocessor()
+        fights_df = fights_preprocessor.load_data()
+        self.fight_history = fights_preprocessor.get_all_fight_ids(fights_df)
+
         # load data
         fighters_df = self.load_data()
 
         # calculate days since dates
         fighters_df = self.calculate_days_since(fighters_df)
+
+        fighters_df = self.get_all_strike_data(fighters_df, fights_df)
 
         # drop unnecessary columns
         fighters_df = self.drop_unnecessary_columns(fighters_df)
