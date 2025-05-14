@@ -1,6 +1,6 @@
 import datetime
 import json
-from engineer_features import engineer_features
+from engineer_features import engineer_features_fights
 import pandas as pd
 import numpy as np
 from sklearn.preprocessing import StandardScaler, LabelEncoder
@@ -573,7 +573,7 @@ class UFCFightsPreprocessor:
         self.output_df = self.copy_fighter_stats(self.output_df, fights_df)
         self.output_df = self.calculate_career_stats(self.output_df, fights_df)
         self.output_df = self.get_all_strike_data(self.output_df, fights_df)
-        self.output_df = engineer_features(self.output_df)
+        self.output_df = engineer_features_fights(self.output_df)
 
         self.output_df = self.mirror_data(self.output_df)
 
