@@ -1,8 +1,8 @@
 import pandas as pd
 
-def engineer_features(target_df: pd.DataFrame) -> pd.DataFrame:
+def engineer_features_fights(target_df: pd.DataFrame) -> pd.DataFrame:
     """
-    Create new features for prediction
+    Create new features for prediction for fights_df
 
     Args:
         df: DataFrame
@@ -116,5 +116,71 @@ def engineer_features(target_df: pd.DataFrame) -> pd.DataFrame:
     target_df['head_strike_defense_diff'] = target_df['red_head_strike_defense'] - target_df['blue_head_strike_defense']
     target_df['body_strike_defense_diff'] = target_df['red_body_strike_defense'] - target_df['blue_body_strike_defense']
     target_df['leg_strike_defense_diff'] = target_df['red_leg_strike_defense'] - target_df['blue_leg_strike_defense']
+
+    return target_df
+
+def engineer_features_fighter(target_df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Create new features for prediction for fighters
+
+    Args:
+        df: DataFrame
+
+    Returns:
+        DataFrame with engineered features
+    """
+
+    #
+    #  efficiencies
+    #
+
+    # strike accuracy
+
+    # head strike accuracy
+    target_df[f'head_strike_accuracy'] = target_df[f'head_strikes_landed'] / target_df[
+        f'head_strikes_thrown'].where(target_df[f'head_strikes_thrown'] > 0, 1)
+
+        # body strike accuracy
+    target_df[f'body_strike_accuracy'] = target_df[f'body_strikes_landed'] / target_df[
+        f'body_strikes_thrown'].where(target_df[f'body_strikes_thrown'] > 0, 1)
+
+    # leg strike accuracy
+    target_df[f'leg_strike_accuracy'] = target_df[f'leg_strikes_landed'] / target_df[
+        f'leg_strikes_thrown'].where(target_df[f'leg_strikes_thrown'] > 0, 1)
+
+    # distance strikes
+    target_df[f'distance_strike_accuracy'] = target_df[f'distance_strikes_landed'] / \
+                                                      target_df[f'distance_strikes_thrown'].where(
+                                                          target_df[f'distance_strikes_thrown'] > 0, 1)
+
+    # clinch strike accuracy
+    target_df[f'clinch_strike_accuracy'] = target_df[f'clinch_strikes_landed'] / target_df[
+        f'clinch_strikes_thrown'].where(target_df[f'clinch_strikes_thrown'] > 0, 1)
+
+    # ground strikes accuracy
+    target_df[f'ground_strike_accuracy'] = target_df[f'ground_strikes_landed'] / target_df[
+        f'ground_strikes_thrown'].where(target_df[f'ground_strikes_thrown'] > 0, 1)
+
+    ## v8
+
+    # strike defense
+
+    # head strike defense
+    target_df[f'head_strike_defense'] = (1 -
+                            (target_df[f'head_strikes_landed_opponent'] /
+                            target_df[f'head_strikes_thrown_opponent']).where(
+                            target_df[f'head_strikes_thrown_opponent'] > 0, 1))
+
+    # body strike defense
+    target_df[f'body_strike_defense'] = (1 -
+                            (target_df[f'body_strikes_landed_opponent'] /
+                            target_df[f'body_strikes_thrown_opponent']).where(
+                            target_df[f'body_strikes_thrown_opponent'] > 0, 1))
+
+    # leg strike defense
+    target_df[f'leg_strike_defense'] = 1 - (target_df[f'leg_strikes_landed_opponent'] /
+                                            target_df[f'leg_strikes_thrown_opponent']).where(
+                                            target_df[f'leg_strikes_thrown_opponent'] > 0, 1)
+
 
     return target_df

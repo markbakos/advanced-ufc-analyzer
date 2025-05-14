@@ -3,6 +3,7 @@ import pandas as pd
 import logging
 from typing import List, Tuple
 from data_preprocessing import UFCFightsPreprocessor
+from engineer_features import engineer_features_fighter
 from sklearn.impute import SimpleImputer
 
 logger = logging.getLogger(__name__)
@@ -250,6 +251,9 @@ class FighterDataPreprocessing:
 
         # handle missing values
         fighters_df = self.handle_missing_values(fighters_df)
+
+        # engineer stats
+        fighters_df = engineer_features_fighter(fighters_df)
 
         # save the processed data
         output_dir = "data/processed"
