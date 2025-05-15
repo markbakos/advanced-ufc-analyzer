@@ -5,6 +5,7 @@ from typing import List, Tuple
 from data_preprocessing import UFCFightsPreprocessor
 from engineer_features import engineer_features_fighter
 from sklearn.impute import SimpleImputer
+from sklearn.preprocessing import StandardScaler, LabelEncoder
 
 logger = logging.getLogger(__name__)
 
@@ -17,6 +18,9 @@ class FighterDataPreprocessing:
         """
         self.fighters_df = fighter_path
         self.fight_history = {}
+
+        self.scalers = {}
+        self.label_encoders = {}
 
     def load_data(self) -> pd.DataFrame:
         """
@@ -224,6 +228,56 @@ class FighterDataPreprocessing:
 
         return target_df
 
+    def scale_features(self, df: pd.DataFrame) -> pd.DataFrame:
+        """
+        Scale numerical features using StandardScaler
+
+        Args:
+            df: Input DataFrame
+
+        Returns:
+            DataFrame with scaled features
+        """
+        logger.info("Scaling numerical features...")
+
+        # columns to exclude from scaling
+        exclude_columns = ['total_rounds']
+
+        # get numerical columns
+        numeric_columns = df.select_dtypes(include=['int64', 'float64']).columns
+        numeric_columns = [col for col in numeric_columns if col not in exclude_columns]
+
+        scaler = StandardScaler()
+        df[numeric_columns] = scaler.fit_transform(df[numeric_columns])
+        self.scalers['numeric'] = scaler
+
+        return df
+
+    def categorize_features(self, df: pd.DataFrame) -> pd.DataFrame:
+        """
+        Categorize features using LabelEncoder
+
+        Args:
+            df: Input DataFrame
+
+        Returns:
+            DataFrame with categorized features
+        """
+        logger.info("Categorizing features...")
+
+        # columns to categorize
+        columns = ['stance']
+
+        # get categorical columns
+        categorical_columns = [col for col in columns if col in df.columns]
+
+        for col in categorical_columns:
+            le = LabelEncoder()
+            df[col] = le.fit_transform(df[col])
+            self.label_encoders[col] = le
+
+        return df
+
     def prepare_data(self) -> pd.DataFrame:
         """
         Handles the preprocessing
@@ -251,6 +305,10 @@ class FighterDataPreprocessing:
 
         # handle missing values
         fighters_df = self.handle_missing_values(fighters_df)
+
+        # scale and categorize features
+        fighters_df = self.scale_features(fighters_df)
+        fighters_df = self.categorize_features(fighters_df)
 
         # engineer stats
         fighters_df = engineer_features_fighter(fighters_df)
