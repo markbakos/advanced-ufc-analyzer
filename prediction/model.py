@@ -2,6 +2,9 @@ import keras
 from keras import layers
 import tensorflow as tf
 
+def handle_nan_values(x):
+    return tf.where(tf.math.is_nan(x), tf.zeros_like(x), x)
+
 def prediction_model(n_features, n_result_classes, n_win_method_classes):
     """
     Builds a prediction model using a neural network.
@@ -10,7 +13,7 @@ def prediction_model(n_features, n_result_classes, n_win_method_classes):
     # create input layer
     inputs = keras.Input(shape=(n_features,))
 
-    x = layers.Lambda(lambda x: tf.where( tf.math.is_nan(x), tf.zeros_like(x), x), output_shape=lambda input_shape: input_shape)(inputs)
+    x = layers.Lambda(handle_nan_values, output_shape=lambda input_shape: input_shape)(inputs)
 
     # create dense layers
     x = layers.Dense(128, activation='relu',  kernel_initializer='he_normal', kernel_regularizer=keras.regularizers.l2(0.001))(x)

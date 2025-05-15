@@ -4,6 +4,7 @@ import joblib
 from keras import models
 import tensorflow as tf
 from engineer_features import calculate_differentials
+from prediction.model import handle_nan_values
 
 class UFCPredictor:
     def __init__(self, model_dir = "models/", data_dir = "data/processed/"):
@@ -20,7 +21,7 @@ class UFCPredictor:
         """
         try:
             model_path = os.path.join(self.model_dir, "model.keras")
-            return models.load_model(model_path, safe_mode= False)
+            return models.load_model(model_path, custom_objects={'handle_nan_values': handle_nan_values}, safe_mode=False)
         except FileNotFoundError:
             print(f"Model file not found at {model_path}")
             raise FileNotFoundError
@@ -232,6 +233,16 @@ class UFCPredictor:
 
         return matchup_data
 
+    def make_prediction(self, prediction_data):
+        """Make prediction using model"""
+
+        #convert data to numpy array
+        X = prediction_data.values
+
+        prediction = self.model.predict(X)
+
+        return prediction
+
     def main(self):
         """
         Main function to load the model and fighter data.
@@ -254,6 +265,8 @@ class UFCPredictor:
         prediction_data['total_rounds'] = 5
 
         prediction_data.to_csv("data/prediction.csv", index=False)
+
+        prediction = self.make_prediction(prediction_data)
 
 if __name__ == '__main__':
     predictor = UFCPredictor()
