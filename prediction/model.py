@@ -10,7 +10,7 @@ def prediction_model(n_features, n_result_classes, n_win_method_classes):
     # create input layer
     inputs = keras.Input(shape=(n_features,))
 
-    x = layers.Lambda(lambda x: tf.where( tf.math.is_nan(x), tf.zeros_like(x), x))(inputs)
+    x = layers.Lambda(lambda x: tf.where( tf.math.is_nan(x), tf.zeros_like(x), x), output_shape=lambda input_shape: input_shape)(inputs)
 
     # create dense layers
     x = layers.Dense(128, activation='relu',  kernel_initializer='he_normal', kernel_regularizer=keras.regularizers.l2(0.001))(x)
