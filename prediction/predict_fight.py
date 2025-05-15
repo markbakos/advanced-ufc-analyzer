@@ -251,6 +251,10 @@ class UFCPredictor:
         # prepare prediction
         prediction_data = self.prepare_prediction_data(fighter1, fighter2)
 
+        prediction_data['total_rounds'] = 5
+
+        prediction_data.to_csv("data/prediction.csv", index=False)
+
 if __name__ == '__main__':
     predictor = UFCPredictor()
     predictor.main()
