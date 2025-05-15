@@ -515,7 +515,7 @@ class UFCFightsPreprocessor:
         logger.info("Categorizing features...")
 
         # columns to categorize
-        columns = ['total_rounds', 'red_stance', 'blue_stance']
+        columns = ['red_stance', 'blue_stance']
 
         # get categorical columns
         categorical_columns = [col for col in columns if col in df.columns]
