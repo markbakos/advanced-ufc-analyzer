@@ -184,3 +184,52 @@ def engineer_features_fighter(target_df: pd.DataFrame) -> pd.DataFrame:
 
 
     return target_df
+
+def calculate_differentials(fighter1: pd.DataFrame, fighter2: pd.DataFrame) -> pd.DataFrame:
+    """
+    Calculate differentials between two fighters
+    """
+    differentials = pd.DataFrame()
+
+    differentials['experience_diff'] = pd.Series(fighter1['total_ufc_fights']) - pd.Series(fighter2['total_ufc_fights'])
+
+    # calculate win rate differences
+    differentials['win_rate_diff'] = (fighter1['wins_in_ufc'] / (
+        fighter1['total_ufc_fights'] if fighter1['total_ufc_fights'] > 0 else 1)) - \
+                                     (fighter2['wins_in_ufc'] / (
+                                         fighter2['total_ufc_fights'] if fighter2['total_ufc_fights'] > 0 else 1))
+
+    # calculate takedown differentials
+    differentials['takedown_diff'] = fighter1['takedowns_landed'] - fighter2['takedowns_landed']
+
+    # total strikes, per round, per minute
+    differentials['total_strike_diff'] = fighter1['strikes_landed'] - fighter2['strikes_landed']
+    differentials['total_strike_diff_per_round'] = fighter1['strikes_landed_per_round'] - fighter2[
+        'strikes_landed_per_round']
+    differentials['total_strike_diff_per_minute'] = fighter1['strikes_landed_per_minute'] - fighter2[
+        'strikes_landed_per_minute']
+
+    # location differentials
+    differentials['total_head_strike_diff'] = fighter1['head_strikes_landed'] - fighter2['head_strikes_landed']
+    differentials['total_body_strike_diff'] = fighter1['body_strikes_landed'] - fighter2['body_strikes_landed']
+    differentials['total_leg_strike_diff'] = fighter1['leg_strikes_landed'] - fighter2['leg_strikes_landed']
+
+    # position differentials
+    differentials['distance_strike_diff'] = fighter1['distance_strikes_landed'] - fighter2['distance_strikes_landed']
+    differentials['clinch_strike_diff'] = fighter1['clinch_strikes_landed'] - fighter2['clinch_strikes_landed']
+    differentials['ground_strike_diff'] = fighter1['ground_strikes_landed'] - fighter2['ground_strikes_landed']
+
+    # accuracy differentials
+    differentials['head_accuracy_diff'] = fighter1['head_strike_accuracy'] - fighter2['head_strike_accuracy']
+    differentials['body_accuracy_diff'] = fighter1['body_strike_accuracy'] - fighter2['body_strike_accuracy']
+    differentials['leg_accuracy_diff'] = fighter1['leg_strike_accuracy'] - fighter2['leg_strike_accuracy']
+    differentials['distance_accuracy_diff'] = fighter1['distance_strike_accuracy'] - fighter2['distance_strike_accuracy']
+    differentials['clinch_accuracy_diff'] = fighter1['clinch_strike_accuracy'] - fighter2['clinch_strike_accuracy']
+    differentials['ground_accuracy_diff'] = fighter1['ground_strike_accuracy'] - fighter2['ground_strike_accuracy']
+
+    # defense differentials
+    differentials['head_strike_defense_diff'] = fighter1['head_strike_defense'] - fighter2['head_strike_defense']
+    differentials['body_strike_defense_diff'] = fighter1['body_strike_defense'] - fighter2['body_strike_defense']
+    differentials['leg_strike_defense_diff'] = fighter1['leg_strike_defense'] - fighter2['leg_strike_defense']
+
+    return differentials
