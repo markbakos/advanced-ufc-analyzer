@@ -8,7 +8,7 @@ from sklearn.impute import SimpleImputer
 
 logger = logging.getLogger(__name__)
 
-TEST_RUN = True
+TEST_RUN = False
 
 class FighterDataPreprocessing:
     def __init__(self, fighter_path: str = "../scraper/fighters/spiders/fighters.csv", output_dir = "data/processed"):
@@ -35,7 +35,7 @@ class FighterDataPreprocessing:
         logger.info("Dropping unnecessary columns from fighter data")
 
         # drop unnecessary columns
-        df = df.drop(columns=['fighter_id', 'fighter_name', 'nickname', 'fighter_style', 'wins', 'losses', 'draws',
+        df = df.drop(columns=['nickname', 'fighter_style', 'wins', 'losses', 'draws',
                               'win_percentage', 'momentum', 'SLpM', 'str_acc', 'SApM', 'str_def', 'td_avg', 'td_acc',
                               'td_def', 'sub_avg', 'date_of_birth', 'last_fight_date', 'last_win_date', 'updated_timestamp'])
 
