@@ -3,6 +3,7 @@ import pandas as pd
 import joblib
 from keras import models
 import tensorflow as tf
+from engineer_features import calculate_differentials
 
 class UFCPredictor:
     def __init__(self, model_dir = "models/", data_dir = "data/processed/"):
@@ -223,6 +224,11 @@ class UFCPredictor:
             'blue_body_strike_defense': [blue_fighter['body_strike_defense']],
             'blue_leg_strike_defense': [blue_fighter['leg_strike_defense']]
         })
+
+        differentials = calculate_differentials(red_fighter, blue_fighter)
+
+        for key, value in differentials.items():
+            matchup_data[key] = value
 
         return matchup_data
 
