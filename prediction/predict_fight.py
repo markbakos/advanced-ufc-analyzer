@@ -1,6 +1,8 @@
 import os
 import pandas as pd
 import joblib
+from keras import models
+import tensorflow as tf
 
 class UFCPredictor:
     def __init__(self, model_dir = "models/", data_dir = "data/processed/"):
@@ -17,7 +19,7 @@ class UFCPredictor:
         """
         try:
             model_path = os.path.join(self.model_dir, "model.keras")
-            return joblib.load(model_path)
+            return models.load_model(model_path, safe_mode= False)
         except FileNotFoundError:
             print(f"Model file not found at {model_path}")
             raise FileNotFoundError
@@ -236,11 +238,9 @@ class UFCPredictor:
         fighter2 = self.find_fighter("4126a78111c0855a", fighter_data) # Caio Borralho
 
         # if atleast one fighter not found
-        if not fighter1 or not fighter2:
+        if fighter1 is None or fighter2 is None:
             print("Can't make prediction without both fighter data")
             return
-
-        print(fighter1)
 
         # prepare prediction
         prediction_data = self.prepare_prediction_data(fighter1, fighter2)
