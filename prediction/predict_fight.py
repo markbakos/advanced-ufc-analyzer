@@ -1,19 +1,21 @@
 import os
+import pickle
+
 import pandas as pd
 from keras import models
 import numpy as np
 from engineer_features import calculate_differentials
 from prediction.model import handle_nan_values
-from typing import Tuple
 
 class UFCPredictor:
-    def __init__(self, model_dir = "models/", data_dir = "data/processed/"):
+    def __init__(self, model_dir = "models/", data_dir = "data/processed/", artifacts_path="data/artifacts/preprocessing_artifacts.pkl"):
         """
         Initialize the UFCPredictor
         """
         self.model = None
         self.model_dir = model_dir
         self.data_dir = data_dir
+        self.artifacts_dir = artifacts_path
 
     def load_model(self):
         """
@@ -25,6 +27,11 @@ class UFCPredictor:
         except FileNotFoundError:
             print(f"Model file not found at {model_path}")
             raise FileNotFoundError
+
+    def load_preprocessing_artifacts(self):
+        with open(self.artifacts_dir, 'rb') as f:
+            artifacts = pickle.load(f)
+        return artifacts
 
     def load_fighter_data(self):
         """
@@ -243,15 +250,18 @@ class UFCPredictor:
 
         return prediction
 
-    def _calculate_results(self, prediction):
+    def _calculate_results(self, prediction, artifacts):
         result_probs = prediction[0][0]
         win_method_probs = prediction[1][0]
 
-        result_class = np.argmax(result_probs)
-        win_method_class = np.argmax(win_method_probs)
+        result_class_idx = np.argmax(result_probs)
+        win_method_class_idx = np.argmax(win_method_probs)
 
-        result_percentage = result_probs[result_class] * 100
-        win_method_percentage = win_method_probs[win_method_class] * 100
+        result_class = artifacts['label_encoders']['result'].inverse_transform(np.array([result_class_idx]))[0]
+        win_method_class = artifacts['label_encoders']['win_method'].inverse_transform(np.array([win_method_class_idx]))[0]
+
+        result_percentage = result_probs[result_class_idx] * 100
+        win_method_percentage = win_method_probs[win_method_class_idx] * 100
 
         return result_class, result_percentage, win_method_class, win_method_percentage
 
@@ -266,6 +276,7 @@ class UFCPredictor:
         Main function to load the model and fighter data.
         """
         self.model = self.load_model()
+        artifacts = self.load_preprocessing_artifacts()
         fighter_data = self.load_fighter_data()
 
         # find fighters
@@ -286,7 +297,7 @@ class UFCPredictor:
 
         prediction = self.make_prediction(prediction_data)
 
-        result_class, result_percentage, win_method_class, win_method_percentage = self._calculate_results(prediction)
+        result_class, result_percentage, win_method_class, win_method_percentage = self._calculate_results(prediction, artifacts)
         self._display_results(result_class, result_percentage, win_method_class, win_method_percentage)
 
 if __name__ == '__main__':
