@@ -1,10 +1,10 @@
 import os
 import pandas as pd
-import joblib
 from keras import models
-import tensorflow as tf
+import numpy as np
 from engineer_features import calculate_differentials
 from prediction.model import handle_nan_values
+from typing import Tuple
 
 class UFCPredictor:
     def __init__(self, model_dir = "models/", data_dir = "data/processed/"):
@@ -243,6 +243,24 @@ class UFCPredictor:
 
         return prediction
 
+    def _calculate_results(self, prediction):
+        result_probs = prediction[0][0]
+        win_method_probs = prediction[1][0]
+
+        result_class = np.argmax(result_probs)
+        win_method_class = np.argmax(win_method_probs)
+
+        result_percentage = result_probs[result_class] * 100
+        win_method_percentage = win_method_probs[win_method_class] * 100
+
+        return result_class, result_percentage, win_method_class, win_method_percentage
+
+    def _display_results(self, result_class, result_percentage, win_method_class, win_method_percentage):
+
+        print(f"result: winner: {result_class}, prob: {result_percentage}")
+
+        print(f"win method: {win_method_class}, prob: {win_method_percentage}")
+
     def main(self):
         """
         Main function to load the model and fighter data.
@@ -267,6 +285,9 @@ class UFCPredictor:
         prediction_data.to_csv("data/prediction.csv", index=False)
 
         prediction = self.make_prediction(prediction_data)
+
+        result_class, result_percentage, win_method_class, win_method_percentage = self._calculate_results(prediction)
+        self._display_results(result_class, result_percentage, win_method_class, win_method_percentage)
 
 if __name__ == '__main__':
     predictor = UFCPredictor()
