@@ -1,5 +1,7 @@
 import datetime
 import json
+import pickle
+
 from engineer_features import engineer_features_fights
 import pandas as pd
 import numpy as np
@@ -609,7 +611,6 @@ class UFCFightsPreprocessor:
         logger.info("Data preparation completed successfully")
         
         return fights_df, target, artifacts
-        
 
 def main():
     """
@@ -620,7 +621,13 @@ def main():
     try:
         # prepare data
         features_df, target, artifacts = preprocessor.prepare_data()
-        
+
+        os.makedirs("data/artifacts", exist_ok=True)
+
+        artifacts_path = 'data/artifacts/preprocessing_artifacts.pkl'
+        with open(artifacts_path, 'wb') as f:
+            pickle.dump(artifacts, f)
+
         logger.info("Data preprocessing completed successfully")
         
     except Exception as e:
