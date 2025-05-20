@@ -8,7 +8,7 @@ from engineer_features import calculate_differentials
 from prediction.model import handle_nan_values
 
 class UFCPredictor:
-    def __init__(self, model_dir = "models/", data_dir = "data/processed/", artifacts_path="data/artifacts/preprocessing_artifacts.pkl"):
+    def __init__(self, model_dir = "models/", data_dir = "data/processed/", artifacts_path="data/artifacts/preprocessing_artifacts.pkl", fighter1: str = None, fighter2: str = None):
         """
         Initialize the UFCPredictor
         """
@@ -16,6 +16,9 @@ class UFCPredictor:
         self.model_dir = model_dir
         self.data_dir = data_dir
         self.artifacts_dir = artifacts_path
+
+        self.fighter1 = fighter1
+        self.fighter2 = fighter2
 
     def load_model(self):
         """
@@ -280,8 +283,8 @@ class UFCPredictor:
         fighter_data = self.load_fighter_data()
 
         # find fighters
-        fighter1 = self.find_fighter("e5549c82bfb5582d", fighter_data) # Alex Pereira
-        fighter2 = self.find_fighter("4126a78111c0855a", fighter_data) # Caio Borralho
+        fighter1 = self.find_fighter(self.fighter1, fighter_data) # Alex Pereira
+        fighter2 = self.find_fighter(self.fighter2, fighter_data) # Caio Borralho
 
         # if atleast one fighter not found
         if fighter1 is None or fighter2 is None:
@@ -301,5 +304,5 @@ class UFCPredictor:
         self._display_results(result_class, result_percentage, win_method_class, win_method_percentage)
 
 if __name__ == '__main__':
-    predictor = UFCPredictor()
+    predictor = UFCPredictor(fighter1="e5549c82bfb5582d", fighter2="4126a78111c0855a")
     predictor.main()
