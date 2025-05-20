@@ -4,11 +4,13 @@ import pickle
 import pandas as pd
 from keras import models
 import numpy as np
-from engineer_features import calculate_differentials
+from prediction.engineer_features import calculate_differentials
 from prediction.model import handle_nan_values
 
 class UFCPredictor:
-    def __init__(self, model_dir = "models/", data_dir = "data/processed/", artifacts_path="data/artifacts/preprocessing_artifacts.pkl", fighter1: str = None, fighter2: str = None):
+    def __init__(self, model_dir = "models/", data_dir = "data/processed/",
+                 artifacts_path="data/artifacts/preprocessing_artifacts.pkl",
+                 fighter1: str = None, fighter2: str = None, test_run: bool = False):
         """
         Initialize the UFCPredictor
         """
@@ -16,23 +18,26 @@ class UFCPredictor:
         self.model_dir = model_dir
         self.data_dir = data_dir
         self.artifacts_dir = artifacts_path
+        self.base_dir = os.path.dirname(os.path.abspath(__file__))
 
         self.fighter1 = fighter1
         self.fighter2 = fighter2
+
+        self.test_run = test_run
 
     def load_model(self):
         """
         Load the pre-trained model from the specified directory.
         """
         try:
-            model_path = os.path.join(self.model_dir, "model.keras")
+            model_path = os.path.join(self.base_dir, self.model_dir, "model.keras")
             return models.load_model(model_path, custom_objects={'handle_nan_values': handle_nan_values}, safe_mode=False)
         except FileNotFoundError:
             print(f"Model file not found at {model_path}")
             raise FileNotFoundError
 
     def load_preprocessing_artifacts(self):
-        with open(self.artifacts_dir, 'rb') as f:
+        with open(os.path.join(self.base_dir, self.artifacts_dir), 'rb') as f:
             artifacts = pickle.load(f)
         return artifacts
 
@@ -41,7 +46,7 @@ class UFCPredictor:
         Load the processed fighter data used for training.
         """
         try:
-            return pd.read_csv(os.path.join(self.data_dir, "processed_fighters.csv"))
+            return pd.read_csv(os.path.join(self.base_dir, self.data_dir, "processed_fighters.csv"))
         except FileNotFoundError:
             print(f"Fighter data file not found at {self.data_dir}/processed_fighters.csv")
             raise FileNotFoundError
@@ -296,13 +301,25 @@ class UFCPredictor:
 
         prediction_data['total_rounds'] = 5
 
-        prediction_data.to_csv("data/prediction.csv", index=False)
-
         prediction = self.make_prediction(prediction_data)
 
         result_class, result_percentage, win_method_class, win_method_percentage = self._calculate_results(prediction, artifacts)
-        self._display_results(result_class, result_percentage, win_method_class, win_method_percentage)
+
+        if self.test_run:
+            prediction_data.to_csv("data/prediction.csv", index=False)
+            self._display_results(result_class, result_percentage, win_method_class, win_method_percentage)
+
+        return {
+            "result": {
+                "winner": result_class,
+                "probability": result_percentage
+            },
+            "win_method": {
+                "method": win_method_class,
+                "probability": win_method_percentage
+            }
+        }
 
 if __name__ == '__main__':
-    predictor = UFCPredictor(fighter1="e5549c82bfb5582d", fighter2="4126a78111c0855a")
+    predictor = UFCPredictor(fighter1="e5549c82bfb5582d", fighter2="4126a78111c0855a", test_run=True)
     predictor.main()
