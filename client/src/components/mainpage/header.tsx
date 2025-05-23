@@ -7,7 +7,7 @@ export default function Header() {
         <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
             <div className="container flex h-16 items-center justify-between">
                 <Link href="/client/public">
-                    <div className="flex items-center gap-2 px-8">
+                    <div className="flex items-center gap-2 px-2 lg:px-8">
                         <Trophy className="h-6 w-6 text-red-600" />
                         <span className="text-xl font-bold">UFC Predictor</span>
                     </div>
@@ -26,7 +26,7 @@ export default function Header() {
                         About
                     </Link>
                 </nav>
-                <div className="flex items-center gap-4">
+                <div className="flex items-center gap-4 px-2 lg:px-0">
                     <Link href="/signin" className="text-sm font-medium text-muted-foreground transition-colors hover:text-primary">
                         Sign In
                     </Link>
