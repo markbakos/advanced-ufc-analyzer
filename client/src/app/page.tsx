@@ -1,15 +1,15 @@
 import Link from "next/link"
-import { ChevronRight, TrendingUp } from "lucide-react"
-
+import {ChevronRight, TrendingUp} from "lucide-react"
 import { Button } from "@/components/ui/button"
 import Header from "@/components/mainpage/header"
+import PredictionsSection from "@/components/mainpage/predictions-section";
 
 export default function Home() {
   return (
       <div className="flex min-h-screen flex-col">
         <Header />
         <main className="flex-1">
-          <section className="w-full min-h-[90vh] py-12 md:py-24 lg:py-32 bg-black text-white">
+          <section className="w-full min-h-[85vh] py-12 md:py-24 lg:py-32 bg-black text-white">
             <div className="container px-4 md:px-6 relative">
               <div className="grid gap-6 lg:grid-cols-[1fr_400px] lg:gap-12 xl:grid-cols-[1fr_600px]">
                 <div className="flex flex-col justify-center space-y-4">
@@ -42,6 +42,9 @@ export default function Home() {
               </div>
             </div>
           </section>
+
+          <PredictionsSection />
+
         </main>
       </div>
   )
