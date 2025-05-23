@@ -3,6 +3,7 @@ import {ChevronRight, TrendingUp} from "lucide-react"
 import { Button } from "@/components/ui/button"
 import Header from "@/components/mainpage/header"
 import PredictionsSection from "@/components/mainpage/predictions-section";
+import HowItWorksSection from "@/components/mainpage/hiw-section";
 
 export default function Home() {
   return (
@@ -44,6 +45,8 @@ export default function Home() {
           </section>
 
           <PredictionsSection />
+
+          <HowItWorksSection />
 
         </main>
       </div>
