@@ -27,10 +27,9 @@ export default function PredictionsSection() {
                         <Badge variant="outline" className="border-red-600 text-red-600">
                             Free Predictions
                         </Badge>
-                        <h2 className="text-3xl font-bold tracking-tighter md:text-4xl">This Week's Free Predictions</h2>
+                        <h2 className="text-3xl font-bold tracking-tighter md:text-4xl">Free Predictions</h2>
                         <p className="max-w-[700px] text-muted-foreground md:text-xl">
-                            Check out our expert predictions for upcoming UFC fights. Sign up for premium access to unlock all
-                            predictions.
+                            Check out predictions from our advanced model. Sign up to unlock predictions for any fights.
                         </p>
                     </div>
                 </div>
@@ -65,7 +64,7 @@ interface PredictionCardProps {
 
 export function PredictionCard(prediction: PredictionCardProps) {
     return (
-        <Card className="overflow-hidden">
+        <Card className="overflow-hidden h-[47vh]">
             <CardHeader className="p-0 h-1">
                 <div className="flex justify-between items-center px-3">
                     <Badge className="bg-red-600 hover:bg-red-700">FREE PREDICTION</Badge>
