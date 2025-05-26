@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button"
 import Header from "@/components/mainpage/header"
 import PredictionsSection from "@/components/mainpage/predictions-section";
 import HowItWorksSection from "@/components/mainpage/hiw-section";
+import Footer from "@/components/mainpage/footer";
 
 export default function Home() {
   return (
@@ -47,6 +48,8 @@ export default function Home() {
           <PredictionsSection />
 
           <HowItWorksSection />
+
+          <Footer />
 
         </main>
       </div>
