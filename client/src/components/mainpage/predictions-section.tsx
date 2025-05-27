@@ -20,13 +20,10 @@ const predictions = [
 
 export default function PredictionsSection() {
     return (
-        <section className="w-full py-12 md:py-24 lg:py-32 flex justify-center">
+        <section id="predictions" className="w-full py-12 md:py-24 lg:py-32 flex justify-center">
             <div className="container px-4 md:px-6">
                 <div className="flex flex-col items-center justify-center space-y-4 text-center">
                     <div className="space-y-2">
-                        <Badge variant="outline" className="border-red-600 text-red-600">
-                            Free Predictions
-                        </Badge>
                         <h2 className="text-3xl font-bold tracking-tighter md:text-4xl">Free Predictions</h2>
                         <p className="max-w-[700px] text-muted-foreground md:text-xl">
                             Check out predictions from our advanced model. Sign up to unlock predictions for any fights.

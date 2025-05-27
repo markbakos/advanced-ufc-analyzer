@@ -3,10 +3,9 @@ import Image from 'next/image'
 import { ChevronRight } from 'lucide-react'
 import Link from "next/link";
 
-
 export default function HowItWorksSection() {
     return (
-        <section id="howitworks" className="w-full py-12 md:py-24 lg:py-32 bg-gray-50">
+        <section id="how-it-works" className="w-full py-12 md:py-24 lg:py-32 bg-gray-50">
             <div className="container px-4 md:px-6">
                 <div className="grid gap-10 lg:grid-cols-2 items-center">
                     <div className="space-y-4">
