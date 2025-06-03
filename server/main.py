@@ -1,8 +1,19 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from contextlib import asynccontextmanager
 
 from server.api.routes import router as api_router
 from server.core.config import settings
+from server.core.database import connect_to_mongo, close_mongo_connection
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # startup
+    await connect_to_mongo()
+    yield
+    #shutdown
+    await close_mongo_connection()
 
 def get_application() -> FastAPI:
     """Create and config FastAPI application"""
@@ -10,6 +21,7 @@ def get_application() -> FastAPI:
         title=settings.PROJECT_NAME,
         description=settings.PROJECT_DESCRIPTION,
         version=settings.VERSION,
+        lifespan=lifespan,
     )
 
     application.add_middleware(
