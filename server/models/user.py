@@ -1,0 +1,104 @@
+from bson import ObjectId
+from pydantic import BaseModel, Field, EmailStr, field_validator
+import re
+from typing import Optional
+from datetime import datetime
+
+# Helper class for MongoDB ObjectId
+class PyObjectId(ObjectId):
+    @classmethod
+    def __get_validators__(cls):
+        yield cls.validate
+
+    @classmethod
+    def validate(cls, value_to_validate):
+        if not ObjectId.is_valid(value_to_validate):
+            raise ValueError("Invalid ObjectId")
+        return ObjectId(value_to_validate)
+
+    @classmethod
+    def __get_pydantic_json_schema__(cls, schema, handler):
+        schema = handler(schema)
+        schema.update(type="string")
+        return schema
+
+class UserBase(BaseModel):
+    username: str = Field(..., min_length=3, max_length=12, description="Username of the user")
+    email: str = Field(..., description="Email of the user")
+
+    @field_validator('username')
+    @classmethod
+    def username_alphanumeric(cls, v):
+        if not re.match("^[a-zA-Z0-9_]+$", v):
+            raise ValueError("Username must be alphanumeric and underscore")
+        return v
+
+class UserCreate(UserBase):
+    password: str = Field(..., min_length=8, max_length=32, description="Password of the user")
+
+    @field_validator('password')
+    @classmethod
+    def validate_password(cls, v):
+        if not re.search(r"[A-Z]", v):
+            raise ValueError('Password must contain at least one uppercase letter')
+        if not re.search(r"[a-z]", v):
+            raise ValueError('Password must contain at least one lowercase letter')
+        if not re.search(r"[0-9]", v):
+            raise ValueError('Password must contain at least one digit')
+        if not re.search(r"[!@#$%^&*()_+\-=\[\]{};':\"\\|,.<>\/?]", v):
+            raise ValueError('Password must contain at least one special character')
+        return v
+
+class UserUpdate(BaseModel):
+    username: Optional[str] = Field(None, min_length=3, max_length=12)
+    email: Optional[EmailStr] = None
+
+class UserInDB(UserBase):
+    id: PyObjectId = Field(default_factory=PyObjectId, alias="_id")
+    hashed_password: str
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    updated_at: datetime = Field(default_factory=datetime.utcnow)
+
+    class Config:
+        allow_population_by_field_name = True
+        arbitrary_types_allowed = True
+        json_encoders = {ObjectId: str}
+
+class User(UserBase):
+    id: PyObjectId = Field(default_factory=PyObjectId, alias="_id")
+    created_at: datetime
+    updated_at: datetime
+
+    class Config:
+        allow_population_by_field_name = True
+        arbitrary_types_allowed = True
+        json_encoders = {ObjectId: str}
+
+class UserLogin(BaseModel):
+    email: EmailStr = Field(..., description="User email")
+    password: str = Field(..., description="User password")
+
+class Token(BaseModel):
+    access_token: str
+    refresh_token: str
+    token_type: str = "bearer"
+
+class TokenData(BaseModel):
+    email: Optional[str] = None
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
