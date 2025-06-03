@@ -13,8 +13,10 @@ class Settings(BaseSettings):
     ALLOWED_ORIGINS: List[str] = ["http://localhost:3000"]
 
     ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24 # 1 day
+    REFRESH_TOKEN_EXPIRE_MINUTES = 60 * 24 * 7 # 7 days
     ALGORITHM = "HS256"
-    JWT_SECRET_KEY = os.environ['JWT_SECRET_KEY']
+    JWT_SECRET_KEY: str
+    JWT_REFRESH_SECRET_KEY: str
 
     class Config:
         env_file = ".env"
