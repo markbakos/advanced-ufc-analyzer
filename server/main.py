@@ -20,16 +20,14 @@ def get_application() -> FastAPI:
         allow_headers=["*"]
     )
 
-    application.include_router(api_router, prefix=settings.API_PREFIX)
-
-    @application.get('/')
-    async def root():
-        """Health check"""
-        return {"status": "OK", "message": "API is running"}
-
     return application
 
 app = get_application()
+app.include_router(api_router, prefix=settings.API_PREFIX)
+@app.get('/')
+async def root():
+    """Health check"""
+    return {"status": "OK", "message": "API is running"}
 
 if __name__ == '__main__':
     import uvicorn
