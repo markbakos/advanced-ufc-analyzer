@@ -5,6 +5,8 @@ import type React from "react"
 import { useState } from "react"
 import Link from "next/link"
 import { Eye, EyeOff, Mail, User, Lock, Trophy, Check, X, ArrowLeft } from "lucide-react"
+import axios from 'axios'
+import { useRouter } from "next/navigation"
 
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -38,6 +40,8 @@ export default function SignUpPage() {
     const [showPassword, setShowPassword] = useState(false)
     const [showConfirmPassword, setShowConfirmPassword] = useState(false)
     const [isLoading, setIsLoading] = useState(false)
+
+    const router = useRouter()
 
     const validateField = (name: string, value: string | boolean) => {
         const newErrors = { ...errors }
@@ -143,12 +147,23 @@ export default function SignUpPage() {
         })
 
         if (Object.keys(errors).length === 0) {
-            setIsLoading(true)
-            // placeholder simulation until backend is ready
-            await new Promise((resolve) => setTimeout(resolve, 2000))
-            setIsLoading(false)
-            // TODO add handling submission later
-            console.log("Form submitted:", formData)
+            try {
+                setIsLoading(true)
+
+                await axios.post('http://0.0.0.0:8000/api/users/register', {
+                    "username": formData.username,
+                    "email": formData.email,
+                    "password": formData.password,
+                })
+
+                router.push("/signin")
+            }
+            catch (e) {
+                console.error("Error occured: ", e)
+            }
+            finally {
+                setIsLoading(false)
+            }
         }
     }
 
