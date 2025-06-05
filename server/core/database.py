@@ -14,7 +14,7 @@ async def connect_to_mongo():
     db.database = db.client["ufc-prediction"]
 
     await db.client.admin.command('ping')
-    print(f"Connected to MongoDB at {settings.MONGO_DB_URI}")
+    print(f"Connected to MongoDB")
 
 async def close_mongo_connection():
     """Close MongoDB connection"""
