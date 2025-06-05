@@ -1,7 +1,7 @@
 from fastapi import Request, APIRouter, status, Depends, HTTPException
 from motor.motor_asyncio import AsyncIOMotorClient, AsyncIOMotorDatabase
 
-from server.api.auth.utils import (
+from server.api.utils.auth import (
     get_hashed_password,
     verify_password,
     create_access_token,
@@ -67,4 +67,24 @@ async def register_user(user_data: UserCreate, db: AsyncIOMotorClient = Depends(
     raise HTTPException(
         status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
         detail="Failed to create user"
+    )
+
+@router.post("/login", response_model=Token)
+async def login_user(user_credentials: UserLogin, db: AsyncIOMotorClient = Depends(get_database)):
+    """Login user and return access and refresh token"""
+
+    user = await db["users"].find_one({"email": user_credentials.email})
+
+    if not user or not verify_password(user_credentials.password, user["hashed_password"]):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid email or password"
+        )
+
+    access_token = create_access_token({"sub": user["email"]})
+    refresh_token = create_refresh_token({"sub": user["email"]})
+
+    return Token(
+        access_token=access_token,
+        refresh_token=refresh_token
     )
