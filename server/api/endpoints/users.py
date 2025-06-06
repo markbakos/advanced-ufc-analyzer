@@ -93,7 +93,6 @@ async def login_user(user_credentials: UserLogin, db: AsyncIOMotorClient = Depen
         refresh_token=refresh_token
     )
 
-@router.get("/current", response_model=User)
 async def get_current_user(
         credentials: HTTPAuthorizationCredentials = Depends(security),
         db: AsyncIOMotorClient = Depends(get_database)
@@ -131,3 +130,6 @@ async def get_current_user(
             detail="Invalid access token"
         )
 
+@router.post("/current", response_model=User)
+async def get_current_user_profile(current_user: User = Depends(get_current_user)):
+    return current_user
