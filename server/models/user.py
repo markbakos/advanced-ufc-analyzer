@@ -23,6 +23,7 @@ class PyObjectId(ObjectId):
         return schema
 
 class UserBase(BaseModel):
+    # Base user model
     username: str = Field(..., min_length=3, max_length=12, description="Username of the user")
     email: str = Field(..., description="Email of the user")
 
@@ -34,6 +35,7 @@ class UserBase(BaseModel):
         return v
 
 class UserCreate(UserBase):
+    # Data for creating User model
     password: str = Field(..., min_length=8, max_length=32, description="Password of the user")
 
     @field_validator('password')
@@ -45,15 +47,15 @@ class UserCreate(UserBase):
             raise ValueError('Password must contain at least one lowercase letter')
         if not re.search(r"[0-9]", v):
             raise ValueError('Password must contain at least one digit')
-        if not re.search(r"[!@#$%^&*()_+\-=\[\]{};':\"\\|,.<>\/?]", v):
-            raise ValueError('Password must contain at least one special character')
         return v
 
 class UserUpdate(BaseModel):
+    # Updateable User data
     username: Optional[str] = Field(None, min_length=3, max_length=12)
     email: Optional[EmailStr] = None
 
 class UserInDB(UserBase):
+    # Database model for storing User data
     id: PyObjectId = Field(default_factory=PyObjectId, alias="_id")
     hashed_password: str
     created_at: datetime = Field(default_factory=datetime.utcnow)
@@ -65,6 +67,7 @@ class UserInDB(UserBase):
         json_encoders = {ObjectId: str}
 
 class User(UserBase):
+    # Safe model for User data, no password included
     id: PyObjectId = Field(default_factory=PyObjectId, alias="_id")
     created_at: datetime
     updated_at: datetime
@@ -75,10 +78,12 @@ class User(UserBase):
         json_encoders = {ObjectId: str}
 
 class UserLogin(BaseModel):
+    # Model used for Login
     email: EmailStr = Field(..., description="User email")
     password: str = Field(..., description="User password")
 
 class Token(BaseModel):
+    # Model for Returning Tokens
     access_token: str
     refresh_token: str
     token_type: str = "bearer"
