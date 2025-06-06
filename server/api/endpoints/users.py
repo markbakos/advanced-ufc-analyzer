@@ -1,4 +1,5 @@
 from fastapi import Request, APIRouter, status, Depends, HTTPException
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from motor.motor_asyncio import AsyncIOMotorClient, AsyncIOMotorDatabase
 
 from server.api.utils.auth import (
@@ -10,8 +11,11 @@ from server.api.utils.auth import (
 from server.models.user import UserCreate, UserLogin, User, UserInDB, Token, UserUpdate
 from server.core.database import get_database
 from datetime import datetime
+from jose import jwt, JWTError
+from server.core.config import settings
 
 router = APIRouter()
+security = HTTPBearer()
 
 router.get("/")
 async def root(request: Request):
@@ -88,3 +92,42 @@ async def login_user(user_credentials: UserLogin, db: AsyncIOMotorClient = Depen
         access_token=access_token,
         refresh_token=refresh_token
     )
+
+@router.get("/current", response_model=User)
+async def get_current_user(
+        credentials: HTTPAuthorizationCredentials = Depends(security),
+        db: AsyncIOMotorClient = Depends(get_database)
+) -> User:
+    """Get current authenticated user"""
+
+    try:
+        payload = jwt.decode(
+            credentials.credentials,
+            key=settings.JWT_SECRET_KEY,
+            algorithms=[settings.ALGORITHM]
+        )
+        email = payload.get("sub")
+        token_type = payload.get("type")
+
+        if email is None or token_type != "access":
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid access token"
+            )
+
+        user_data = await db["users"].find_one({"email": email})
+        if not user_data:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="User not found"
+            )
+
+        user_data["id"] = str(user_data.pop("_id"))
+        return User(**user_data)
+
+    except JWTError:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid access token"
+        )
+
