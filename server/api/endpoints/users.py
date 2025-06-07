@@ -1,3 +1,4 @@
+from bson import ObjectId
 from fastapi import Request, APIRouter, status, Depends, HTTPException
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from motor.motor_asyncio import AsyncIOMotorClient, AsyncIOMotorDatabase
@@ -133,3 +134,54 @@ async def get_current_user(
 @router.get("/current", response_model=User)
 async def get_current_user_profile(current_user: User = Depends(get_current_user)):
     return current_user
+
+@router.put("/current", response_model=dict)
+async def update_user_profile(
+        user_update: UserUpdate,
+        current_user: User = Depends(get_current_user),
+        db: AsyncIOMotorClient = Depends(get_database)
+):
+    update_data = user_update.model_dump(exclude_unset=True)
+
+    if not update_data:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="No fields given to update"
+        )
+
+    if "username" in update_data:
+        existing_user = await db["users"].find_one({
+            "username": update_data["username"],
+            "_id": {"$ne": ObjectId(current_user.id)}
+        })
+        if existing_user:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Username already token"
+            )
+
+    if "email" in update_data:
+        existing_user = await db["users"].find_one({
+            "email": update_data["email"],
+            "_id": {"$ne": ObjectId(current_user.id)}
+        })
+        if existing_user:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Email already token"
+            )
+
+    update_data["updated_at"] = datetime.utcnow()
+
+    result = await db["users"].update_one(
+        {"_id": ObjectId(current_user.id)},
+        {"$set": update_data}
+    )
+
+    if result.modified_count:
+        return {"message": "Profile updated successfully"}
+
+    raise HTTPException(
+        status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        detail="Failed to update"
+    )
