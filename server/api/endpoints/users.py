@@ -133,6 +133,7 @@ async def get_current_user(
 
 @router.get("/current", response_model=User)
 async def get_current_user_profile(current_user: User = Depends(get_current_user)):
+    """Route for using get_current_user function to get the current authenticated user"""
     return current_user
 
 @router.put("/current", response_model=dict)
@@ -141,6 +142,7 @@ async def update_user_profile(
         current_user: User = Depends(get_current_user),
         db: AsyncIOMotorClient = Depends(get_database)
 ):
+    """Update selected fields for the current authenticated user"""
     update_data = user_update.model_dump(exclude_unset=True)
 
     if not update_data:
