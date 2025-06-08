@@ -122,7 +122,7 @@ async def get_current_user(
                 detail="User not found"
             )
 
-        user_data["id"] = str(user_data.pop("_id"))
+        user_data["_id"] = str(user_data["_id"])
         return User(**user_data)
 
     except JWTError:
