@@ -4,8 +4,8 @@ from datetime import datetime, timedelta
 from fastapi import HTTPException, status
 from bson import ObjectId
 import asyncio
-
-from server.models.user import UserCreate, UserLogin, User
+from server.models.user import UserCreate, UserLogin, User, UserInDB, Token, UserUpdate
+from server.core.config import settings
 
 class TestUserRoutes:
     """Test user routes and endpoints"""
@@ -160,6 +160,60 @@ class TestUserRegistration(TestUserRoutes):
 
             assert exc_info.value.status_code == status.HTTP_500_INTERNAL_SERVER_ERROR
             assert "Failed to create user" in str(exc_info.value.detail)
+
+class TestUserLogin(TestUserRoutes):
+    """Test user login functionality"""
+
+    @pytest.mark.asyncio
+    async def test_login_success(self, mock_db, sample_user_login, sample_user_db):
+        """Test successful user login"""
+        from server.api.endpoints.users import login_user
+
+        mock_db["users"].find_one = AsyncMock(return_value=sample_user_db)
+
+        with patch('server.api.endpoints.users.verify_password') as mock_verify, \
+             patch('server.api.endpoints.users.create_access_token') as mock_access, \
+             patch('server.api.endpoints.users.create_refresh_token') as mock_refresh:
+
+            mock_verify.return_value = True
+            mock_access.return_value = "access_token_here"
+            mock_refresh.return_value = "refresh_token_here"
+
+            response = await login_user(sample_user_login, mock_db)
+
+            assert isinstance(response, Token)
+            assert response.access_token == "access_token_here"
+            assert response.refresh_token == "refresh_token_here"
+            mock_db["users"].find_one.assert_called_once_with({"email": sample_user_login.email})
+
+    @pytest.mark.asyncio
+    async def test_login_user_not_found(self, mock_db, sample_user_login, sample_user_db):
+        """Test user login with non-existent user"""
+        from server.api.endpoints.users import login_user
+
+        mock_db["users"].find_one = AsyncMock(return_value=None)
+
+        with pytest.raises(HTTPException) as exc_info:
+            await login_user(sample_user_login, mock_db)
+
+        assert exc_info.value.status_code == status.HTTP_401_UNAUTHORIZED
+        assert "Invalid email or password" in str(exc_info.value.detail)
+
+    @pytest.mark.asyncio
+    async def test_login_wrong_password(self, mock_db, sample_user_login, sample_user_db):
+        """Test user login with incorrect password"""
+        from server.api.endpoints.users import login_user
+
+        mock_db["users"].find_one = AsyncMock(return_value=sample_user_db)
+
+        with patch('server.api.endpoints.users.verify_password') as mock_verify:
+            mock_verify.return_value = False
+
+            with pytest.raises(HTTPException) as exc_info:
+                await login_user(sample_user_login, mock_db)
+
+        assert exc_info.value.status_code == status.HTTP_401_UNAUTHORIZED
+        assert "Invalid email or password" in str(exc_info.value.detail)
 
 if __name__ == '__main__':
     pytest.main([__file__, "-v", "--tb=short"])
