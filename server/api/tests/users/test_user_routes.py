@@ -1,6 +1,7 @@
 import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
 from datetime import datetime, timedelta
+from fastapi import HTTPException, status
 from bson import ObjectId
 import asyncio
 
@@ -100,6 +101,7 @@ class TestUserRegistration(TestUserRoutes):
 
     @pytest.mark.asyncio
     async def test_registration_success(self, mock_db, sample_user_create):
+        """Returns all success"""
         from server.api.endpoints.users import register_user
 
         mock_db["users"].find_one = AsyncMock(return_value=None)
@@ -112,6 +114,35 @@ class TestUserRegistration(TestUserRoutes):
 
         assert response["message"] == "User registered successfully"
         assert "user_id" in response
+
+    @pytest.mark.asyncio
+    async def test_registration_email_taken(self, mock_db, sample_user_create, sample_user_db):
+        """Try with taken email"""
+        from server.api.endpoints.users import register_user
+
+        # mock user with same email
+        mock_db["users"].find_one = AsyncMock(return_value=sample_user_db)
+
+        with pytest.raises(HTTPException) as exc_info:
+            await register_user(sample_user_create, mock_db)
+
+        assert exc_info.value.status_code == status.HTTP_400_BAD_REQUEST
+        assert "Email already registered" in str(exc_info.value.detail)
+
+    @pytest.mark.asyncio
+    async def test_registration_username_taken(self, mock_db, sample_user_create):
+        """Try with taken username"""
+        from server.api.endpoints.users import register_user
+
+        # mock user with same username
+        existing_user = {"username": "testuser", "email": "different@example.com"}
+        mock_db["users"].find_one = AsyncMock(return_value=existing_user)
+
+        with pytest.raises(HTTPException) as exc_info:
+            await register_user(sample_user_create, mock_db)
+
+        assert exc_info.value.status_code == status.HTTP_400_BAD_REQUEST
+        assert "Username already taken" in str(exc_info.value.detail)
 
 if __name__ == '__main__':
     pytest.main([__file__, "-v", "--tb=short"])
