@@ -1,9 +1,13 @@
 import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
 from datetime import datetime, timedelta
+from jose import jwt
+from dns.dnssecalgs import algorithms
 from fastapi import HTTPException, status
 from bson import ObjectId
 import asyncio
+
+from server.api.endpoints.users import get_current_user
 from server.models.user import UserCreate, UserLogin, User, UserInDB, Token, UserUpdate
 from server.core.config import settings
 
@@ -72,6 +76,8 @@ class TestUserRoutes:
             "type": "access",
             "exp": datetime.utcnow() + timedelta(minutes=30)
         }
+        token = jwt.encode(payload, settings.JWT_SECRET_KEY, algorithm=settings.ALGORITHM)
+        return token
 
     @pytest.fixture
     def expired_token(self):
@@ -81,6 +87,8 @@ class TestUserRoutes:
             "type": "access",
             "exp": datetime.utcnow() - timedelta(minutes=30)
         }
+        token = jwt.encode(payload, settings.JWT_SECRET_KEY, algorithm=settings.ALGORITHM)
+        return token
 
 class TestHealthCheck(TestUserRoutes):
     """Test the root health check endpoint"""
@@ -214,6 +222,37 @@ class TestUserLogin(TestUserRoutes):
 
         assert exc_info.value.status_code == status.HTTP_401_UNAUTHORIZED
         assert "Invalid email or password" in str(exc_info.value.detail)
+
+class TestAuthentication(TestUserLogin):
+    """Test authentication middleware and functions"""
+
+    @pytest.mark.asyncio
+    async def test_get_current_user_success(self, mock_db, sample_user_db, valid_token):
+        """Test successful user authentication"""
+        from fastapi.security import HTTPAuthorizationCredentials
+
+        credentials = HTTPAuthorizationCredentials(scheme="Bearer", credentials=valid_token)
+        mock_db["users"].find_one = AsyncMock(return_value=sample_user_db)
+
+        user = await get_current_user(credentials, mock_db)
+
+        assert isinstance(user, User)
+        assert user.email == sample_user_db["email"]
+        assert user.username == sample_user_db["username"]
+
+    @pytest.mark.asyncio
+    async def test_get_current_user_invalid_token(self, mock_db, sample_user_db, valid_token):
+        """Test invalid token user authentication"""
+        from fastapi.security import HTTPAuthorizationCredentials
+
+        credentials = HTTPAuthorizationCredentials(scheme="Bearer", credentials="invalid_token")
+
+        with pytest.raises(HTTPException) as exc_info:
+            await get_current_user(credentials, mock_db)
+
+        assert exc_info.value.status_code == status.HTTP_401_UNAUTHORIZED
+        assert "Invalid access token" in str(exc_info.value.detail)
+
 
 if __name__ == '__main__':
     pytest.main([__file__, "-v", "--tb=short"])
