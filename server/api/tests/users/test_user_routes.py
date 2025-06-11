@@ -95,5 +95,23 @@ class TestHealthCheck(TestUserRoutes):
         assert response["client_host"] == "127.0.0.1"
         assert response["client_port"] == 8000
 
+class TestUserRegistration(TestUserRoutes):
+    """Test user registration"""
+
+    @pytest.mark.asyncio
+    async def test_registration_success(self, mock_db, sample_user_create):
+        from server.api.endpoints.users import register_user
+
+        mock_db["users"].find_one = AsyncMock(return_value=None)
+        mock_db["users"].insert_one = AsyncMock(return_value=MagicMock(inserted_id=ObjectId()))
+
+        with patch('server.api.endpoints.users.get_hashed_password') as mock_hash:
+            mock_hash.return_value = "hashed_password"
+
+            response = await register_user(sample_user_create, mock_db)
+
+        assert response["message"] == "User registered successfully"
+        assert "user_id" in response
+
 if __name__ == '__main__':
     pytest.main([__file__, "-v", "--tb=short"])
