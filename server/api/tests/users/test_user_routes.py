@@ -144,5 +144,22 @@ class TestUserRegistration(TestUserRoutes):
         assert exc_info.value.status_code == status.HTTP_400_BAD_REQUEST
         assert "Username already taken" in str(exc_info.value.detail)
 
+    @pytest.mark.asyncio
+    async def test_registration_database_error(self, mock_db, sample_user_create):
+        """Test with database insertion failure"""
+        from server.api.endpoints.users import register_user
+
+        mock_db["users"].find_one = AsyncMock(return_value=None)
+        mock_db["users"].insert_one = AsyncMock(return_value=MagicMock(inserted_id=None))
+
+        with patch('server.api.endpoints.users.get_hashed_password') as mock_hash:
+            mock_hash.return_value = "hashed_password"
+
+            with pytest.raises(HTTPException) as exc_info:
+                await register_user(sample_user_create, mock_db)
+
+            assert exc_info.value.status_code == status.HTTP_500_INTERNAL_SERVER_ERROR
+            assert "Failed to create user" in str(exc_info.value.detail)
+
 if __name__ == '__main__':
     pytest.main([__file__, "-v", "--tb=short"])
